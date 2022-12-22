@@ -1,2 +1,2 @@
-# devOS-Seasons-ChatLink
-The MC -> Discord chat link we use for our modpacks
+# TeaBridge
+A simple survival friendly MC -> Discord chat bridge
