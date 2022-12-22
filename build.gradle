@@ -1,0 +1,52 @@
+plugins {
+	id "fabric-loom" version "1.0-SNAPSHOT"
+}
+
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+archivesBaseName = project.archives_base_name
+version = project.mod_version
+
+repositories {
+	maven {
+		url = "https://m2.dv8tion.net/releases/"
+		content { includeGroup "net.dv8tion" }
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	modImplementation(fabricApi.module("fabric-api-base", project.fabric_version))
+	modImplementation(fabricApi.module("fabric-command-api-v2", project.fabric_version))
+	modImplementation(fabricApi.module("fabric-lifecycle-events-v1", project.fabric_version))
+
+	include(modImplementation("net.dv8tion:JDA:5.0.0-alpha.18"){
+		exclude module: 'opus-java'
+	})
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 17
+}
+
+java {
+	withSourcesJar()
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.archivesBaseName}"}
+	}
+}
