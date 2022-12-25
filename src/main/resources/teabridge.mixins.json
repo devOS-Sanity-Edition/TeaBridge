@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "one.devos.nautical.teabridge.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "ServerPlayerMixin",
+    "ServerGamePacketListenerImplMixin",
+    "PlayerListMixin",
+    "PlayerAdvancementsMixin",
+    "CrashReportMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

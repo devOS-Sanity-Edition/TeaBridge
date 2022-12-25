@@ -1,10 +1,12 @@
-package one.devos.nautical.chatlink;
+package one.devos.nautical.teabridge;
 
 import java.net.http.HttpClient;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 
@@ -16,11 +18,13 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import one.devos.nautical.chatlink.discord.ChannelListener;
-import one.devos.nautical.chatlink.discord.Discord;
+import one.devos.nautical.teabridge.discord.ChannelListener;
+import one.devos.nautical.teabridge.discord.Discord;
 
-public class ChatLink implements DedicatedServerModInitializer {
+public class TeaBridge implements DedicatedServerModInitializer {
     public static final Logger LOGGER = LogManager.getLogger("TeaBridge");
+
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().setLenient().create();
 
     public static final HttpClient CLIENT = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
 
@@ -34,16 +38,18 @@ public class ChatLink implements DedicatedServerModInitializer {
 
         CommandRegistrationCallback.EVENT.register(this::registerCommands);
 
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            ChannelListener.INSTANCE.setServer(server);
             Discord.start();
         });
-        ServerLifecycleEvents.SERVER_STARTED.register(ChannelListener.INSTANCE);
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> Discord.send(Config.INSTANCE.game.serverStartMessage));
 
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             Discord.stop();
+            Discord.send(Config.INSTANCE.game.serverStopMessage);
         });
     }
-
+ 
     private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx, Commands.CommandSelection environment) {
         dispatcher.register(Commands.literal("teabridge").then(
             Commands.literal("reloadConfig").executes(command -> {

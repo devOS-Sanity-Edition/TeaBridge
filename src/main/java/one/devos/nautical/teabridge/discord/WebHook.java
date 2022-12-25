@@ -1,4 +1,4 @@
-package one.devos.nautical.chatlink.discord;
+package one.devos.nautical.teabridge.discord;
 
 import java.util.HashMap;
 import java.util.function.Supplier;

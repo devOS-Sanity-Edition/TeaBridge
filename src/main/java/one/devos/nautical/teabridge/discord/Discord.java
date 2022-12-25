@@ -1,11 +1,9 @@
-package one.devos.nautical.chatlink.discord;
+package one.devos.nautical.teabridge.discord;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Set;
-
-import javax.annotation.Nonnull;
+import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,68 +11,68 @@ import com.google.gson.GsonBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import one.devos.nautical.chatlink.ChatLink;
-import one.devos.nautical.chatlink.Config;
+import one.devos.nautical.teabridge.TeaBridge;
+import one.devos.nautical.teabridge.Config;
 
 public class Discord {
-    // We can't use the Gson instance from the Config class since it has html escaping disabled, which we want enabled for obvious reasons
+    // We can't use the Gson instance from the TeaBridge class since it has html escaping disabled, which we want enabled for obvious reasons
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().create();
 
     private static JDA jda;
 
     public static void start() {
         if (Config.INSTANCE.discord.token.isEmpty()) {
-            ChatLink.LOGGER.fatal("Unable to load, no Discord token is specified!");
+            TeaBridge.LOGGER.fatal("Unable to load, no Discord token is specified!");
             return;
         }
 
         if (Config.INSTANCE.discord.channel.isEmpty()) {
-            ChatLink.LOGGER.fatal("Unable to load, no Discord channel is specified!");
+            TeaBridge.LOGGER.fatal("Unable to load, no Discord channel is specified!");
             return;
         }
 
         if (Config.INSTANCE.discord.webhook.isEmpty()) {
-            ChatLink.LOGGER.fatal("Unable to load, no Discord webhook is specified!");
+            TeaBridge.LOGGER.fatal("Unable to load, no Discord webhook is specified!");
             return;
         }
 
         try {
             jda = JDABuilder.createDefault(Config.INSTANCE.discord.token)
-                .enableIntents(Set.of(GatewayIntent.MESSAGE_CONTENT))
+                .enableIntents(List.of(GatewayIntent.MESSAGE_CONTENT))
                 .addEventListeners(ChannelListener.INSTANCE)
                 .build();
         } catch (Exception e) {
-            ChatLink.LOGGER.fatal("Exception initializing JDA", e);
+            TeaBridge.LOGGER.fatal("Exception initializing JDA", e);
         }
     }
 
-    public static void send(@Nonnull String message) {
+    public static void send(String message) {
         if (jda != null) {
             var channel = jda.getTextChannelById(Config.INSTANCE.discord.channel);
             if (channel != null) {
-                channel.sendMessage(message);
+                channel.sendMessage(message).queue();
             } else {
-                ChatLink.LOGGER.error("Unable to send messages, invalid Discord channel!!!!");
+                TeaBridge.LOGGER.error("Unable to send messages, invalid Discord channel!!!!");
             }
         }
     }
 
-    public static void send(@Nonnull WebHook webHook, @Nonnull String message) {
+    public static void send(WebHook webHook, String message) {
         if (jda != null) {
             try {
                 WebHook.CONVERTING_MAP.put("content", message);
+                WebHook.CONVERTING_MAP.put("allowed_mentions", WebHook.AllowedMentions.INSTANCE);
                 WebHook.CONVERTING_MAP.put("username", webHook.username().get());
                 WebHook.CONVERTING_MAP.put("avatar_url", webHook.avatar());
-                WebHook.CONVERTING_MAP.put("allowed_mentions", WebHook.AllowedMentions.INSTANCE);
 
-                HttpResponse<String> response = ChatLink.CLIENT.send(HttpRequest.newBuilder()
+                var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
                     .uri(URI.create(Config.INSTANCE.discord.webhook))
                     .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(WebHook.CONVERTING_MAP)))
                     .header("Content-Type", "application/json; charset=utf-8")
                     .build(), HttpResponse.BodyHandlers.ofString());
                 if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
             } catch (Exception e) {
-                ChatLink.LOGGER.warn("Failed to send webhook message to discord : ", e);
+                TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
             }
         }
     }

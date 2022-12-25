@@ -1,26 +1,29 @@
 {
   "schemaVersion": 1,
-  "id": "chatlink",
+  "id": "teabridge",
   "version": "${version}",
   "name": "TeaBridge",
   "description": "A simple survival friendly MC -> Discord chat bridge",
   "authors": [
-    "devOS",
+    "devOS: Sanity Edition",
+    "Team Nautical"
+  ],
+  "contributors": [
     "Maximumpower55"
   ],
   "contact": {
     "website": "https://devos.one/",
-    "repo": "https://github.com/devOS-Sanity-Edition/devOS-Seasons-FalseDRM"
+    "repo": "https://github.com/devOS-Sanity-Edition/TeaBridge"
   },
   "license": "MIT",
   "environment": "server",
   "entrypoints": {
     "server": [
-      "one.devos.nautical.chatlink.ChatLink"
+      "one.devos.nautical.teabridge.TeaBridge"
     ]
   },
   "mixins": [
-    "chatlink.mixins.json"
+    "teabridge.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.7.4",
