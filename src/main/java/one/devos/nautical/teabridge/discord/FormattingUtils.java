@@ -23,11 +23,11 @@ import net.minecraft.network.chat.TextColor;
 
 public class FormattingUtils {
     public static MutableComponent formatUser(final User user, @Nullable final Member member) {
-        var mention = Component.literal("@" + user.getName());
+        var mention = Component.literal("@" + (member != null ? member.getEffectiveName() : user.getName()));
 
         var hoverText =
             Component.literal(user.getName()).append(
-            Component.literal("#" + user.getDiscriminator()).withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+            Component.literal("#" + user.getDiscriminator()).withStyle(ChatFormatting.DARK_GRAY));
 
         if (member != null) {
             mention.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(member.getColorRaw())));
@@ -45,7 +45,7 @@ public class FormattingUtils {
             for (Role role : roles) {
                 formatted.append(
                     Component.literal("\n■ ").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(role.getColorRaw()))).append(
-                    Component.literal(role.getName()).withStyle(ChatFormatting.RESET, ChatFormatting.GRAY)));
+                    Component.literal(role.getName()).withStyle(Style.EMPTY.withBold(false))));
             }
         }
 

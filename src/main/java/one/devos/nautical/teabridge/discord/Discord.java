@@ -46,34 +46,42 @@ public class Discord {
         }
     }
 
+    // use a disguised webhook to avoid delay and rate-limiting
     public static void send(String message) {
-        if (jda != null) {
-            var channel = jda.getTextChannelById(Config.INSTANCE.discord.channel);
-            if (channel != null) {
-                channel.sendMessage(message).queue();
-            } else {
-                TeaBridge.LOGGER.error("Unable to send messages, invalid Discord channel!!!!");
-            }
+        try {
+            WebHook.CONVERTING_MAP.put("content", message);
+            WebHook.CONVERTING_MAP.put("allowed_mentions", WebHook.AllowedMentions.INSTANCE);
+
+            var selfUser = jda.getSelfUser();
+            WebHook.CONVERTING_MAP.put("username", selfUser.getName());
+            WebHook.CONVERTING_MAP.put("avatar_url", selfUser.getEffectiveAvatarUrl());
+
+            var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
+                .uri(URI.create(Config.INSTANCE.discord.webhook))
+                .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(WebHook.CONVERTING_MAP)))
+                .header("Content-Type", "application/json; charset=utf-8")
+                .build(), HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
+        } catch (Exception e) {
+            TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
         }
     }
 
     public static void send(WebHook webHook, String message) {
-        if (jda != null) {
-            try {
-                WebHook.CONVERTING_MAP.put("content", message);
-                WebHook.CONVERTING_MAP.put("allowed_mentions", WebHook.AllowedMentions.INSTANCE);
-                WebHook.CONVERTING_MAP.put("username", webHook.username().get());
-                WebHook.CONVERTING_MAP.put("avatar_url", webHook.avatar());
+        try {
+            WebHook.CONVERTING_MAP.put("content", message);
+            WebHook.CONVERTING_MAP.put("allowed_mentions", WebHook.AllowedMentions.INSTANCE);
+            WebHook.CONVERTING_MAP.put("username", webHook.username().get());
+            WebHook.CONVERTING_MAP.put("avatar_url", webHook.avatar());
 
-                var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
-                    .uri(URI.create(Config.INSTANCE.discord.webhook))
-                    .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(WebHook.CONVERTING_MAP)))
-                    .header("Content-Type", "application/json; charset=utf-8")
-                    .build(), HttpResponse.BodyHandlers.ofString());
-                if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
-            } catch (Exception e) {
-                TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
-            }
+            var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
+                .uri(URI.create(Config.INSTANCE.discord.webhook))
+                .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(WebHook.CONVERTING_MAP)))
+                .header("Content-Type", "application/json; charset=utf-8")
+                .build(), HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
+        } catch (Exception e) {
+            TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
         }
     }
 

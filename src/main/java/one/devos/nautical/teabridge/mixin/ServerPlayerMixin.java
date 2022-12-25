@@ -28,8 +28,7 @@ public abstract class ServerPlayerMixin implements PlayerWebHook {
 
     @ModifyArg(method = "die", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
     private Component teabridge$mirrorDeathMessage(Component deathMessage) {
-        if (!Config.INSTANCE.game.mirrorDeath) return deathMessage;
-        Discord.send(deathMessage.getString());
+        if (Config.INSTANCE.game.mirrorDeath) Discord.send("**" + deathMessage.getString() + "**");
         return deathMessage;
     }
 }

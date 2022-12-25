@@ -42,7 +42,7 @@ public class TeaBridge implements DedicatedServerModInitializer {
             ChannelListener.INSTANCE.setServer(server);
             Discord.start();
         });
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> Discord.send(Config.INSTANCE.game.serverStartMessage));
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> Discord.send(Config.INSTANCE.game.serverStartMessage));
 
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             Discord.stop();
