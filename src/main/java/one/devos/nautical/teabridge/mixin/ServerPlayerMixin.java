@@ -1,7 +1,5 @@
 package one.devos.nautical.teabridge.mixin;
 
-import javax.annotation.Nonnull;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -21,7 +19,6 @@ public abstract class ServerPlayerMixin implements PlayerWebHook {
     );
 
     @Override
-    @Nonnull
     public WebHook getWebHook() {
         return teabridge$webHook;
     }
