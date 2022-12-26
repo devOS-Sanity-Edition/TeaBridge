@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
+import one.devos.nautical.teabridge.TeaBridge;
 
 class SafeGuildGet {
     private static final Set<Runnable> queued = Sets.newHashSet();
@@ -14,10 +15,16 @@ class SafeGuildGet {
 
     static void set(JDA jda) {
         new Thread(() -> {
+            var tries = 0;
             while (cached == null) {
+                if (tries >= 100) {
+                    TeaBridge.LOGGER.fatal("Failed to get guild!");
+                    break;
+                }
                 try {
                     cached = jda.getGuilds().get(0);
                 } catch (IndexOutOfBoundsException e) { }
+                tries++;
             }
             for (Runnable runnable : queued) {
                 runnable.run();
