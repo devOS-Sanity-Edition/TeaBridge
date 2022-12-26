@@ -1,13 +1,15 @@
 plugins {
 	id "fabric-loom" version "1.0-SNAPSHOT"
+	id 'maven-publish'
 	id "io.github.juuxel.loom-quiltflower" version "1.+"
+	id 'org.ajoberstar.grgit' version '4.1.0'
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = project.archives_base_name
-version = project.mod_version
+version = "${project.mod_version}-mc${project.minecraft_version}-rev.${grgit.head().abbreviatedId}"
 
 repositories {
 	maven {
@@ -57,5 +59,37 @@ java {
 jar {
 	from("LICENSE") {
 		rename { "${it}_${project.archivesBaseName}"}
+	}
+}
+
+task buildOrPublish {
+	group = "build"
+	String mavenUser = System.getenv().MAVEN_USER
+	if (mavenUser != null && !mavenUser.isEmpty()) {
+		dependsOn(tasks.getByName("publish"))
+		println("prepared for publish")
+	} else {
+		dependsOn(tasks.getByName("build"))
+		println("prepared for build")
+	}
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			version "${project.mod_version}-fabric"
+			from components.java
+		}
+	}
+
+	repositories {
+		maven {
+			url = "https://mvn.devos.one/${System.getenv().PUBLISH_SUFFIX}/"
+			credentials {
+				username = System.getenv().MAVEN_USER
+				password = System.getenv().MAVEN_PASS
+			}
+			authentication { basic(BasicAuthentication) }
+		}
 	}
 }
