@@ -10,6 +10,7 @@ targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = project.archives_base_name
 version = "${project.mod_version}-mc${project.minecraft_version}-rev.${grgit.head().abbreviatedId}"
+group = project.maven_group
 
 repositories {
 	maven {
