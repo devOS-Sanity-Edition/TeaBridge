@@ -17,8 +17,8 @@ public class Config {
             INSTANCE = TeaBridge.GSON.fromJson(Files.readString(configPath), Config.class);
         } else {
             INSTANCE = new Config();
-            Files.writeString(configPath, TeaBridge.GSON.toJson(INSTANCE), StandardCharsets.UTF_8);
         }
+        Files.writeString(configPath, TeaBridge.GSON.toJson(INSTANCE), StandardCharsets.UTF_8);
     }
 
     @Expose public Discord discord = new Discord();
@@ -26,12 +26,14 @@ public class Config {
     @Expose public Crashes crashes = new Crashes();
 
     public static class Discord {
-        @Expose public String webhook = "";
-        @Expose public String channel = "";
         @Expose public String token = "";
+        @Expose public String guild = "";
+        @Expose public String channel = "";
+        @Expose public String webhook = "";
     }
 
     public static class Game {
+        @Expose public String serverStartingMessage = "Server is starting...";
         @Expose public String serverStartMessage = "Server has started!";
         @Expose public String serverStopMessage = "Server has stopped!";
         @Expose public String serverCrashMessage = "Server has crashed!";

@@ -2,8 +2,8 @@ package one.devos.nautical.teabridge;
 
 import java.net.http.HttpClient;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -12,7 +12,7 @@ import com.mojang.brigadier.CommandDispatcher;
 
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents; 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -22,7 +22,7 @@ import one.devos.nautical.teabridge.discord.ChannelListener;
 import one.devos.nautical.teabridge.discord.Discord;
 
 public class TeaBridge implements DedicatedServerModInitializer {
-    public static final Logger LOGGER = LogManager.getLogger("TeaBridge");
+    public static final Logger LOGGER = LoggerFactory.getLogger("TeaBridge");
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().setLenient().create();
 
@@ -35,18 +35,19 @@ public class TeaBridge implements DedicatedServerModInitializer {
         } catch (Exception e) {
             LOGGER.warn("Failed to load config using defaults : ", e);
         }
+        Discord.start();
 
         CommandRegistrationCallback.EVENT.register(this::registerCommands);
 
-        ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> Discord.send(Config.INSTANCE.game.serverStartingMessage));
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             ChannelListener.INSTANCE.setServer(server);
-            Discord.start();
+            Discord.send(Config.INSTANCE.game.serverStartMessage);
         });
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> Discord.send(Config.INSTANCE.game.serverStartMessage));
 
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
-            Discord.stop();
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             Discord.send(Config.INSTANCE.game.serverStopMessage);
+            Discord.stop();
         });
     }
  

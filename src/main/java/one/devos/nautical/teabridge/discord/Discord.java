@@ -22,17 +22,17 @@ public class Discord {
 
     public static void start() {
         if (Config.INSTANCE.discord.token.isEmpty()) {
-            TeaBridge.LOGGER.fatal("Unable to load, no Discord token is specified!");
+            TeaBridge.LOGGER.error("Unable to load, no Discord token is specified!");
             return;
         }
 
         if (Config.INSTANCE.discord.channel.isEmpty()) {
-            TeaBridge.LOGGER.fatal("Unable to load, no Discord channel is specified!");
+            TeaBridge.LOGGER.error("Unable to load, no Discord channel is specified!");
             return;
         }
 
         if (Config.INSTANCE.discord.webhook.isEmpty()) {
-            TeaBridge.LOGGER.fatal("Unable to load, no Discord webhook is specified!");
+            TeaBridge.LOGGER.error("Unable to load, no Discord webhook is specified!");
             return;
         }
 
@@ -41,33 +41,30 @@ public class Discord {
                 .enableIntents(List.of(GatewayIntent.MESSAGE_CONTENT))
                 .addEventListeners(ChannelListener.INSTANCE)
                 .build();
-            SafeGuildGet.set(jda);
         } catch (Exception e) {
-            TeaBridge.LOGGER.fatal("Exception initializing JDA", e);
+            TeaBridge.LOGGER.error("Exception initializing JDA", e);
         }
     }
 
     // use a disguised webhook to avoid delay and rate-limiting
     public static void send(String message) {
-        SafeGuildGet.safeGet(guild -> {
-            try {
-                WebHook.CONVERTING_MAP.put("content", message);
-                WebHook.CONVERTING_MAP.put("allowed_mentions", WebHook.AllowedMentions.INSTANCE);
+        try {
+            WebHook.CONVERTING_MAP.put("content", message);
+            WebHook.CONVERTING_MAP.put("allowed_mentions", WebHook.AllowedMentions.INSTANCE);
 
-                var selfMember = guild.getMember(jda.getSelfUser());
-                WebHook.CONVERTING_MAP.put("username", selfMember.getEffectiveName());
-                WebHook.CONVERTING_MAP.put("avatar_url", selfMember.getEffectiveAvatarUrl());
+            var selfMember = jda.getGuildById(Config.INSTANCE.discord.guild).getSelfMember();
+            WebHook.CONVERTING_MAP.put("username", selfMember.getEffectiveName());
+            WebHook.CONVERTING_MAP.put("avatar_url", selfMember.getEffectiveAvatarUrl());
 
-                var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
-                    .uri(URI.create(Config.INSTANCE.discord.webhook))
-                    .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(WebHook.CONVERTING_MAP)))
-                    .header("Content-Type", "application/json; charset=utf-8")
-                    .build(), HttpResponse.BodyHandlers.ofString());
-                if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
-            } catch (Exception e) {
-                TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
-            }
-        });
+            var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
+                .uri(URI.create(Config.INSTANCE.discord.webhook))
+                .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(WebHook.CONVERTING_MAP)))
+                .header("Content-Type", "application/json; charset=utf-8")
+                .build(), HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
+        } catch (Exception e) {
+            TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
+        }
     }
 
     public static void send(WebHook webHook, String message) {

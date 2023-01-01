@@ -16,6 +16,8 @@ public class ChannelListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
+        if (server == null) return;
+
         var author = event.getAuthor();
         if (!event.isFromGuild() || !event.getChannel().getId().equals(Config.INSTANCE.discord.channel) || author.isBot()) return;
 
