@@ -20,6 +20,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import one.devos.nautical.teabridge.discord.ChannelListener;
 import one.devos.nautical.teabridge.discord.Discord;
+import one.devos.nautical.teabridge.util.CrashHandler;
 
 public class TeaBridge implements DedicatedServerModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("TeaBridge");
@@ -45,8 +46,8 @@ public class TeaBridge implements DedicatedServerModInitializer {
             Discord.send(Config.INSTANCE.game.serverStartMessage);
         });
 
-        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
-            Discord.send(Config.INSTANCE.game.serverStopMessage);
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            if (!CrashHandler.CRASH_VALUE.get()) Discord.send(Config.INSTANCE.game.serverStopMessage);
             Discord.stop();
         });
     }

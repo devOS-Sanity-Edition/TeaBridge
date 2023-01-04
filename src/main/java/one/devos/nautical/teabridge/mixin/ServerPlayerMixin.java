@@ -15,7 +15,7 @@ import one.devos.nautical.teabridge.duck.PlayerWebHook;
 public abstract class ServerPlayerMixin implements PlayerWebHook {
     private final WebHook teabridge$webHook = new WebHook(
         () -> ((ServerPlayer) (Object) this).getDisplayName().getString(),
-        "https://api.nucleoid.xyz/skin/face/256/" + ((ServerPlayer) (Object) this).getStringUUID()
+        () -> "https://api.nucleoid.xyz/skin/face/256/" + ((ServerPlayer) (Object) this).getStringUUID()
     );
 
     @Override
