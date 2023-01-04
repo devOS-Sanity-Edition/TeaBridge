@@ -16,6 +16,7 @@
     "repo": "https://github.com/devOS-Sanity-Edition/TeaBridge"
   },
   "license": "MIT",
+  "icon": "assets/teabridge/icon.png",
   "environment": "server",
   "entrypoints": {
     "server": [
