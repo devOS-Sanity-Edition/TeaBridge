@@ -20,9 +20,10 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import one.devos.nautical.teabridge.TeaBridge;
 
 public class FormattingUtils {
-    public static MutableComponent formatUser(final User user, @Nullable final Member member) {
+    public static MutableComponent formatUser(final boolean arrows, final User user, @Nullable final Member member) {
         var mention = Component.literal("@" + (member != null ? member.getEffectiveName() : user.getName()));
 
         var hoverText =
@@ -34,7 +35,14 @@ public class FormattingUtils {
             hoverText.append("\n\n").append(FormattingUtils.formatRoles(member.getRoles()));
         }
 
-        return Component.literal("<").append(mention).append(">").withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText)));
+        var prefix = Component.empty();
+        var suffix = Component.empty();
+        if (arrows) {
+            prefix = Component.literal("<");
+            suffix = Component.literal(">");
+        }
+
+        return prefix.append(mention).append(suffix).withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText)));
     }
 
     public static MutableComponent formatRoles(final Collection<Role> roles) {
@@ -55,6 +63,22 @@ public class FormattingUtils {
     public static MutableComponent formatMessage(final Message message) {
         var formatted = Component.empty();
 
+        // Handle non default message types
+        switch (message.getType()) {
+            case CHANNEL_PINNED_ADD:
+                formatted
+                    .append(Component.literal("[").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC))
+                    .append(formatUser(false, message.getAuthor(), message.getMember()).withStyle(ChatFormatting.ITALIC))
+                    .append(Component.literal(" has pinned a message").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC))
+                    .append(Component.literal("]").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+                return formatted;
+            case DEFAULT:
+                break;
+            default:
+                TeaBridge.LOGGER.error("Message: " + message.getContentRaw() + " has a unknown message type: ", message.getType().toString());
+                return formatted.append(Component.literal("Error when handling message, check log for details!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+        }
+
         // Handle replying
         var referencedMessage = message.getReferencedMessage();
         if (referencedMessage != null) {
@@ -69,7 +93,7 @@ public class FormattingUtils {
                 .withStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, attachment.getUrl())).withColor(ChatFormatting.BLUE)));
         }
 
-        formatted.append(formatUser(message.getAuthor(), message.getMember()).append(" ").append(messageContent));
+        formatted.append(formatUser(true, message.getAuthor(), message.getMember()).append(" ").append(messageContent));
 
         return formatted;
     }
