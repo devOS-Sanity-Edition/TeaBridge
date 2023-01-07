@@ -3,8 +3,6 @@ package one.devos.nautical.teabridge.discord;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -17,7 +15,6 @@ import one.devos.nautical.teabridge.Config;
 
 public class Discord {
     private static JDA jda;
-    public static final List<Runnable> jdaBuildTasks = Collections.synchronizedList(new ArrayList<>());
 
     private static Member cachedSelfMember;
     private static Supplier<Member> cachingSelfMemberGet = () -> {
@@ -52,10 +49,6 @@ public class Discord {
                 .enableIntents(List.of(GatewayIntent.MESSAGE_CONTENT))
                 .addEventListeners(ChannelListener.INSTANCE)
                 .build();
-            synchronized (jdaBuildTasks) {
-                jdaBuildTasks.forEach(Runnable::run);
-                jdaBuildTasks.clear();
-            }
         } catch (Exception e) {
             TeaBridge.LOGGER.error("Exception initializing JDA", e);
         }
@@ -77,8 +70,6 @@ public class Discord {
             } catch (Exception e) {
                 TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
             }
-        } else {
-            jdaBuildTasks.add(() -> send(webHook, message));
         }
     }
 

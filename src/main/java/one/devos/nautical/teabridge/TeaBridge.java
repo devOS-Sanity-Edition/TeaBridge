@@ -10,27 +10,23 @@ import com.google.gson.GsonBuilder;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 
-import net.fabricmc.api.DedicatedServerModInitializer;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents; 
 import net.minecraft.ChatFormatting;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import one.devos.nautical.teabridge.discord.ChannelListener;
 import one.devos.nautical.teabridge.discord.Discord;
 import one.devos.nautical.teabridge.util.CrashHandler;
 
-public class TeaBridge implements DedicatedServerModInitializer {
+public class TeaBridge {
     public static final Logger LOGGER = LoggerFactory.getLogger("TeaBridge");
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().setLenient().create();
 
     public static final HttpClient CLIENT = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
 
-    @Override
-    public void onInitializeServer() {
+    public static void initialize() {
         try {
             Config.load();
         } catch (Exception e) {
@@ -38,21 +34,24 @@ public class TeaBridge implements DedicatedServerModInitializer {
         }
         Discord.start();
 
-        CommandRegistrationCallback.EVENT.register(this::registerCommands);
-
-        ServerLifecycleEvents.SERVER_STARTING.register(server -> Discord.send(Config.INSTANCE.game.serverStartingMessage));
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            ChannelListener.INSTANCE.setServer(server);
-            Discord.send(Config.INSTANCE.game.serverStartMessage);
-        });
-
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
-            if (!CrashHandler.CRASH_VALUE.get()) Discord.send(Config.INSTANCE.game.serverStopMessage);
-            Discord.stop();
-        });
+        PlatformUtil.registerCommand(TeaBridge::registerCommands);
     }
- 
-    private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx, Commands.CommandSelection environment) {
+
+    public static void onServerStarting(MinecraftServer server) {
+        Discord.send(Config.INSTANCE.game.serverStartingMessage);
+    }
+
+    public static void onServerStart(MinecraftServer server) {
+        ChannelListener.INSTANCE.setServer(server);
+        Discord.send(Config.INSTANCE.game.serverStartMessage);
+    }
+
+    public static void onServerStop(MinecraftServer server) {
+        if (!CrashHandler.CRASH_VALUE.get()) Discord.send(Config.INSTANCE.game.serverStopMessage);
+        Discord.stop();
+    }
+
+    private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("teabridge").then(
             Commands.literal("reloadConfig").executes(command -> {
                 try {

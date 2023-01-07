@@ -19,8 +19,7 @@ TeaBridge is another Fabric/Quilt mod that bridges your Discord and Minecraft ch
 
 - Send and view messages between Discord and Minecraft
 - Server Crash detection [uploads to mclo.gs]
-- Markdown support [provided by Styled Chat API]
-    - Optional but we recommend you have Styled Chat installed for this to work
+- Markdown support [provided by Placeholder API]
 - Shows roles of a Discord member if you hover over their Discord name in Minecraft chat
 - Shows in Minecraft chat if a message sent in Discord chat was an attachment
 - Mention filtering [good luck pinging `@everyone`/`@here` in Minecraft chat]

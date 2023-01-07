@@ -5,13 +5,11 @@ import java.nio.file.Files;
 
 import com.google.gson.annotations.Expose;
 
-import net.fabricmc.loader.api.FabricLoader;
-
 public class Config {
     public static Config INSTANCE;
 
     public static void load() throws Exception {
-        var configPath = FabricLoader.getInstance().getConfigDir().resolve("teabridge.json");
+        var configPath = PlatformUtil.getConfigDir().resolve("teabridge.json");
 
         if (Files.exists(configPath)) {
             INSTANCE = TeaBridge.GSON.fromJson(Files.readString(configPath), Config.class);
