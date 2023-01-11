@@ -17,7 +17,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import one.devos.nautical.teabridge.PlatformUtil;
-import one.devos.nautical.teabridge.TeaBridge;
 
 public class FormattingUtils {
     public static MutableComponent formatUser(final boolean arrows, final User user, @Nullable final Member member) {
@@ -57,7 +56,7 @@ public class FormattingUtils {
         return formatted;
     }
 
-    public static Optional<MutableComponent> formatMessage(final Message message) {
+    public static Optional<MutableComponent> formatMessage(final Message message) throws Exception {
         var formatted = PlatformUtil.empty();
 
         // Handle non default message types
@@ -87,8 +86,7 @@ public class FormattingUtils {
             case DEFAULT:
                 break;
             default:
-                TeaBridge.LOGGER.error("Message: " + message.getContentRaw() + " has a unknown message type: ", message.getType().toString());
-                return Optional.of(formatted.append(PlatformUtil.literal("Error when handling message, check log for details!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)));
+                throw new Exception("Message: " + message.getContentRaw() + " has a unknown message type: " + message.getType().toString());
         }
 
         var messageContent = PlatformUtil.formatText(message.getContentDisplay());
