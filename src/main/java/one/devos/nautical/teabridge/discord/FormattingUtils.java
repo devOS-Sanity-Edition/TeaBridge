@@ -1,6 +1,7 @@
 package one.devos.nautical.teabridge.discord;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public class FormattingUtils {
         return formatted;
     }
 
-    public static MutableComponent formatMessage(final Message message) {
+    public static Optional<MutableComponent> formatMessage(final Message message) {
         var formatted = PlatformUtil.empty();
 
         // Handle non default message types
@@ -67,18 +68,27 @@ public class FormattingUtils {
                     .append(formatUser(false, message.getAuthor(), message.getMember()).withStyle(ChatFormatting.ITALIC))
                     .append(PlatformUtil.literal(" has pinned a message").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC))
                     .append(PlatformUtil.literal("]").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
-                return formatted;
+                return Optional.of(formatted);
+            case INLINE_REPLY:
+                var referencedMessage = message.getReferencedMessage();
+                if (referencedMessage != null) {
+                    var formattedReferencedMessage = formatMessage(referencedMessage);
+                    if (formattedReferencedMessage.isPresent()) formatted
+                        .append("Reply to ")
+                        .append(formattedReferencedMessage.get())
+                        .append("\n");
+                }
+                break;
+            case THREAD_CREATED:
+            case AUTO_MODERATION_ACTION:
+                return Optional.empty();
+            case SLASH_COMMAND:
+            case CONTEXT_COMMAND:
             case DEFAULT:
                 break;
             default:
                 TeaBridge.LOGGER.error("Message: " + message.getContentRaw() + " has a unknown message type: ", message.getType().toString());
-                return formatted.append(PlatformUtil.literal("Error when handling message, check log for details!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
-        }
-
-        // Handle replying
-        var referencedMessage = message.getReferencedMessage();
-        if (referencedMessage != null) {
-            formatted.append("Reply to ").append(formatMessage(referencedMessage).withStyle(ChatFormatting.GRAY)).append("\n");
+                return Optional.of(formatted.append(PlatformUtil.literal("Error when handling message, check log for details!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)));
         }
 
         var messageContent = PlatformUtil.formatText(message.getContentDisplay());
@@ -91,7 +101,7 @@ public class FormattingUtils {
 
         formatted.append(formatUser(true, message.getAuthor(), message.getMember()).append(" ").append(messageContent));
 
-        return formatted;
+        return Optional.of(formatted);
     }
 
 }

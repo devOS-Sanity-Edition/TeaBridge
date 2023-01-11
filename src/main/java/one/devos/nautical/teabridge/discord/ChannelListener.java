@@ -22,6 +22,7 @@ public class ChannelListener extends ListenerAdapter {
         if (!event.isFromGuild() || !event.getChannel().getId().equals(Config.INSTANCE.discord.channel) || author.isBot()) return;
 
         var playerList = server.getPlayerList();
-        if (playerList != null) playerList.broadcastSystemMessage(FormattingUtils.formatMessage(event.getMessage()), false);
+        var formattedMessage = FormattingUtils.formatMessage(event.getMessage());
+        if (playerList != null && formattedMessage.isPresent()) playerList.broadcastSystemMessage(formattedMessage.get(), false);
     }
 }
