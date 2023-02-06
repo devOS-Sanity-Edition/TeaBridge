@@ -5,6 +5,8 @@ import java.nio.file.Files;
 
 import com.google.gson.annotations.Expose;
 
+import one.devos.nautical.teabridge.util.JsonUtils;
+
 public class Config {
     public static Config INSTANCE;
 
@@ -12,11 +14,11 @@ public class Config {
         var configPath = PlatformUtil.getConfigDir().resolve("teabridge.json");
 
         if (Files.exists(configPath)) {
-            INSTANCE = TeaBridge.GSON.fromJson(Files.readString(configPath), Config.class);
+            INSTANCE = JsonUtils.GSON.fromJson(Files.readString(configPath), Config.class);
         } else {
             INSTANCE = new Config();
         }
-        Files.writeString(configPath, TeaBridge.GSON.toJson(INSTANCE), StandardCharsets.UTF_8);
+        Files.writeString(configPath, JsonUtils.GSON.toJson(INSTANCE), StandardCharsets.UTF_8);
     }
 
     @Expose public Discord discord = new Discord();
@@ -25,8 +27,6 @@ public class Config {
 
     public static class Discord {
         @Expose public String token = "";
-        @Expose public String guild = "";
-        @Expose public String channel = "";
         @Expose public String webhook = "";
     }
 

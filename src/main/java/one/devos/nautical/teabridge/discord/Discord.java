@@ -11,16 +11,16 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import one.devos.nautical.teabridge.TeaBridge;
+import one.devos.nautical.teabridge.util.JsonUtils;
 import one.devos.nautical.teabridge.Config;
 
 public class Discord {
     private static JDA jda;
+    private static long guild;
 
     private static Member cachedSelfMember;
     private static Supplier<Member> cachingSelfMemberGet = () -> {
-        if (cachedSelfMember == null) {
-            cachedSelfMember = jda.getGuildById(Config.INSTANCE.discord.guild).getSelfMember();
-        }
+        if (cachedSelfMember == null) cachedSelfMember = jda.getGuildById(guild).getSelfMember();
         return cachedSelfMember;
     };
     public static final WebHook WEB_HOOK = new WebHook(
@@ -34,17 +34,22 @@ public class Discord {
             return;
         }
 
-        if (Config.INSTANCE.discord.channel.isEmpty()) {
-            TeaBridge.LOGGER.error("Unable to load, no Discord channel is specified!");
-            return;
-        }
-
         if (Config.INSTANCE.discord.webhook.isEmpty()) {
             TeaBridge.LOGGER.error("Unable to load, no Discord webhook is specified!");
             return;
         }
 
         try {
+            // Get required data from webhook
+            var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
+                .uri(URI.create(Config.INSTANCE.discord.webhook))
+                .GET()
+                .build(), HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
+            var webhookDataJson = JsonUtils.fromJsonString(response.body());
+            guild = Long.parseLong(webhookDataJson.get("guild_id"));
+            ChannelListener.INSTANCE.setChannel(Long.parseLong(webhookDataJson.get("channel_id")));
+
             jda = JDABuilder.createDefault(Config.INSTANCE.discord.token)
                 .enableIntents(List.of(GatewayIntent.MESSAGE_CONTENT))
                 .addEventListeners(ChannelListener.INSTANCE)

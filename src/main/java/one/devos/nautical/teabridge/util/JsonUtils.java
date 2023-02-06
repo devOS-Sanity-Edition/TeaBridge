@@ -11,6 +11,8 @@ import com.google.gson.reflect.TypeToken;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 
 public class JsonUtils {
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().create();
+
     private static final Object2ReferenceOpenHashMap<String, Object> BACKING_MAP = new Object2ReferenceOpenHashMap<>();
 
     public static MapBackedJsonObject fromJsonString(String json) throws Exception {
@@ -22,8 +24,6 @@ public class JsonUtils {
     }
 
     public record MapBackedJsonObject(Map<String, Object> backingMap) {
-        private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().create();
-
         private static final Type BACKING_MAP_TYPE = TypeToken.getParameterized(Map.class, String.class, Object.class).getType();
 
         public static MapBackedJsonObject fromJsonString(String json) {
