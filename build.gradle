@@ -1,7 +1,7 @@
 plugins {
 	id "fabric-loom" version "1.0-SNAPSHOT"
 	id "maven-publish"
-	id "io.github.juuxel.loom-quiltflower" version "1.+"
+	id "io.github.juuxel.loom-vineflower" version "1.+"
 	id "org.ajoberstar.grgit" version '4.1.0'
 }
 
@@ -45,6 +45,8 @@ dependencies {
 	include("com.squareup.okhttp3:okhttp:4.9.3")
 	include("com.squareup.okio:okio-jvm:3.2.0")
 	include("com.neovisionaries:nv-websocket-client:2.14")
+	// for "squareup.x" libs (they all use kotlin)
+	modLocalRuntime("net.fabricmc:fabric-language-kotlin:1.9.1+kotlin.1.8.10")
 }
 
 processResources {

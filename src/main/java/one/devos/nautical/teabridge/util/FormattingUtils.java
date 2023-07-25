@@ -1,4 +1,4 @@
-package one.devos.nautical.teabridge.discord;
+package one.devos.nautical.teabridge.util;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Message.Attachment;
+import net.dv8tion.jda.api.entities.sticker.Sticker;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.minecraft.ChatFormatting;
@@ -95,6 +96,12 @@ public class FormattingUtils {
             messageContent.append(
                 PlatformUtil.literal(" [" + attachment.getFileName() + "]")
                 .withStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, attachment.getUrl())).withColor(ChatFormatting.BLUE)));
+        }
+
+        for (Sticker sticker : message.getStickers()) {
+            messageContent.append(
+                PlatformUtil.literal(" [" + sticker.getName() + "]")
+                .withStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, sticker.getIconUrl())).withColor(ChatFormatting.BLUE)));
         }
 
         formatted.append(formatUser(true, message.getAuthor(), message.getMember()).append(" ").append(messageContent));

@@ -8,14 +8,10 @@ import one.devos.nautical.teabridge.util.JsonUtils;
 
 public record WebHook(Supplier<String> username, Supplier<String> avatar) {
     public String jsonWithContent(final String content) throws Exception {
-        return JsonUtils.toJsonString(this, json -> {
-            return json
-                .put("content", content)
-                .put("allowed_mentions", AllowedMentions.INSTANCE)
-                .put("username", username.get())
-                .put("avatar_url", avatar.get());
-        });
+        return JsonUtils.GSON.toJson(new Json(content, AllowedMentions.INSTANCE, username.get(), avatar.get()));
     }
+
+    private static record Json(@Expose String content, @Expose AllowedMentions allowedMentions, @Expose String username, @Expose String avatar_url) { }
 
     private static class AllowedMentions {
         static final AllowedMentions INSTANCE = new AllowedMentions();

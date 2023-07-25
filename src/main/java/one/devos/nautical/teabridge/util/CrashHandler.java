@@ -6,6 +6,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
+import com.google.gson.annotations.Expose;
+
 import net.minecraft.CrashReport;
 import one.devos.nautical.teabridge.Config;
 import one.devos.nautical.teabridge.TeaBridge;
@@ -40,13 +42,15 @@ public class CrashHandler {
                 .header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
                 .build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
-            crashMessage = JsonUtils.fromJsonString(response.body()).get("url");
+            crashMessage = JsonUtils.GSON.fromJson(response.body(), LogUploadResponse.class).url;
         } catch (Exception e) {
             crashMessage = "Failed to upload crash report : " + e.getMessage();
         }
 
         if (crashMessage != null) Discord.send(crashMessage);
     }
+
+    private static record LogUploadResponse(@Expose String url) { }
 
     public interface CrashValue {
         boolean get();
