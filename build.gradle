@@ -45,8 +45,8 @@ dependencies {
 	include("com.squareup.okhttp3:okhttp:4.9.3")
 	include("com.squareup.okio:okio-jvm:3.2.0")
 	include("com.neovisionaries:nv-websocket-client:2.14")
-	// for "squareup.x" libs (they all use kotlin), I confirmed with a quilt dev that this won't break with QKL (Quilt Kotlin Libaries)
-	include("net.fabricmc:fabric-language-kotlin:1.9.1+kotlin.1.8.10")
+	// for "squareup.x" libs (they all use kotlin)
+	modLocalRuntime("net.fabricmc:fabric-language-kotlin:1.9.1+kotlin.1.8.10")
 }
 
 processResources {
