@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.network.chat.ChatSender;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
@@ -20,20 +19,19 @@ import one.devos.nautical.teabridge.duck.PlayerWebHook;
 @Mixin(PlayerList.class)
 public abstract class PlayerListMixin {
     @Inject(
-        method = "broadcastChatMessage(Lnet/minecraft/network/chat/PlayerChatMessage;Ljava/util/function/Predicate;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/network/chat/ChatSender;Lnet/minecraft/network/chat/ChatType$Bound;)V",
+        method = "broadcastChatMessage(Lnet/minecraft/network/chat/PlayerChatMessage;Ljava/util/function/Predicate;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/network/chat/ChatType$Bound;)V",
         at = @At("RETURN")
     )
     private void teabridge$mirrorChatMessages(
         PlayerChatMessage chatMessage,
         Predicate<ServerPlayer> sendToPredicate,
         ServerPlayer player,
-        ChatSender chatSender,
         ChatType.Bound bound, CallbackInfo ci
     ) {
         if (player != null) {
             ((PlayerWebHook) player).send(chatMessage);
         } else {
-            Discord.send(chatMessage.signedContent().plain());
+            Discord.send(chatMessage.signedContent());
         }
     }
 

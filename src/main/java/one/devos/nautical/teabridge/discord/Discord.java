@@ -6,6 +6,9 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Member;
@@ -46,13 +49,13 @@ public class Discord {
                 .GET()
                 .build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
-            var webhookDataJson = JsonUtils.fromJsonString(response.body());
-            guild = Long.parseLong(webhookDataJson.get("guild_id"));
-            ChannelListener.INSTANCE.setChannel(Long.parseLong(webhookDataJson.get("channel_id")));
+            var webHookDataResponse = JsonUtils.GSON.fromJson(response.body(), WebHookDataResponse.class);
+            guild = Long.parseLong(webHookDataResponse.guildId);
+            ChannelListener.INSTANCE.setChannel(Long.parseLong(webHookDataResponse.channelId));
 
             jda = JDABuilder.createDefault(Config.INSTANCE.discord.token)
                 .enableIntents(List.of(GatewayIntent.MESSAGE_CONTENT))
-                .addEventListeners(ChannelListener.INSTANCE)
+                .addEventListeners(ChannelListener.INSTANCE, CommandUtils.INSTANCE)
                 .build();
         } catch (Exception e) {
             TeaBridge.LOGGER.error("Exception initializing JDA", e);
@@ -84,4 +87,6 @@ public class Discord {
             jda = null;
         }
     }
+
+    private static record WebHookDataResponse(@Expose @SerializedName("guild_id") String guildId, @Expose @SerializedName("channel_id") String channelId) { }
 }

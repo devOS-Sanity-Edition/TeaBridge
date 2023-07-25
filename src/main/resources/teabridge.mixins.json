@@ -8,7 +8,8 @@
     "ServerGamePacketListenerImplMixin",
     "PlayerListMixin",
     "PlayerAdvancementsMixin",
-    "CrashReportMixin"
+    "CrashReportMixin",
+    "jda.MessageReceivedEventMixin"
   ],
   "injectors": {
     "defaultRequire": 1

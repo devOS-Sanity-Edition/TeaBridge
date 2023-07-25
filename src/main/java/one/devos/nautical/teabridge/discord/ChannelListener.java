@@ -8,10 +8,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import one.devos.nautical.teabridge.PlatformUtil;
+import one.devos.nautical.teabridge.duck.MessageEventProxyTag;
 import one.devos.nautical.teabridge.util.FormattingUtils;
 
 public class ChannelListener extends ListenerAdapter {
-    public static ChannelListener INSTANCE = new ChannelListener();
+    public static final ChannelListener INSTANCE = new ChannelListener();
 
     private MinecraftServer server;
     private long channel;
@@ -20,25 +21,32 @@ public class ChannelListener extends ListenerAdapter {
         this.server = server;
     }
 
-    public void setChannel(long channel) {
+    void setChannel(long channel) {
         this.channel = channel;
     }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (server == null) return;
+        PKCompat.await(event, proxiedEvent -> {
+            if (server == null) return;
 
-        if (!event.isFromGuild() || event.getChannel().getIdLong() != channel || PKAware.isFromBot(event.getMessage())) return;
+            if (
+                !event.isFromGuild() ||
+                event.getChannel().getIdLong() != channel ||
+                (event.isWebhookMessage() && !((MessageEventProxyTag) (Object) event).teabridge$isProxied()) ||
+                (!event.isWebhookMessage() && ((MessageEventProxyTag) (Object) event).teabridge$isProxied())
+                ) return;
 
-        final var playerList = server.getPlayerList();
+            final var playerList = server.getPlayerList();
 
-        Optional<MutableComponent> formattedMessage;
-        try {
-            formattedMessage = FormattingUtils.formatMessage(event.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            formattedMessage = Optional.of(PlatformUtil.literal("Exception when handling message, check log for details!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
-        }
-        if (playerList != null && formattedMessage.isPresent()) playerList.broadcastSystemMessage(formattedMessage.get(), false);
+            Optional<MutableComponent> formattedMessage;
+            try {
+                formattedMessage = FormattingUtils.formatMessage(event.getMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
+                formattedMessage = Optional.of(PlatformUtil.literal("Exception when handling message, check log for details!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+            }
+            if (playerList != null && formattedMessage.isPresent()) playerList.broadcastSystemMessage(formattedMessage.get(), false);
+        });
     }
 }

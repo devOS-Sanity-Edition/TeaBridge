@@ -18,6 +18,6 @@ public interface PlayerWebHook {
     }
 
     default void send(PlayerChatMessage message) {
-        send(message.signedContent().plain());
+        send(message.signedContent());
     }
 }

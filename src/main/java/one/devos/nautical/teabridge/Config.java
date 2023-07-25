@@ -28,6 +28,8 @@ public class Config {
     public static class Discord {
         @Expose public String token = "";
         @Expose public String webhook = "";
+
+        @Expose public int pkMessageDelay = 0;
     }
 
     public static class Game {

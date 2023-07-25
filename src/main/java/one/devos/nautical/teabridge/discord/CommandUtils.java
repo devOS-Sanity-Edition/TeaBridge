@@ -10,9 +10,11 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 
 public class CommandUtils extends ListenerAdapter {
-    private static final Map<String, Consumer<SlashCommandInteractionEvent>> COMMANDS = new Object2ReferenceOpenHashMap<>();
+    static final CommandUtils INSTANCE = new CommandUtils();
 
-    static void createCommand(Guild guild, CommandData commandData, Consumer<SlashCommandInteractionEvent> whenUsed) {
+    private final Map<String, Consumer<SlashCommandInteractionEvent>> COMMANDS = new Object2ReferenceOpenHashMap<>();
+
+    void createCommand(Guild guild, CommandData commandData, Consumer<SlashCommandInteractionEvent> whenUsed) {
         COMMANDS.putIfAbsent(commandData.getName(), whenUsed);
         guild.updateCommands().addCommands(commandData).queue();
     }
