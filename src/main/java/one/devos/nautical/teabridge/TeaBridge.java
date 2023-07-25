@@ -56,7 +56,7 @@ public class TeaBridge {
             Commands.literal("reloadConfig").executes(command -> {
                 try {
                     Config.load();
-                    command.getSource().sendSuccess(Component.literal("Config reloaded!").withStyle(ChatFormatting.GREEN), false);
+                    command.getSource().sendSuccess(() -> Component.literal("Config reloaded!").withStyle(ChatFormatting.GREEN), false);
                     command.getSource().sendSystemMessage(Component.literal("Warning: options in the discord category will not be reloaded!").withStyle(ChatFormatting.YELLOW));
                 } catch (Exception e) {
                     command.getSource().sendFailure(Component.literal("Failed to reload config!").withStyle(ChatFormatting.RED));
