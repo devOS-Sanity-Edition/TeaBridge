@@ -34,7 +34,7 @@ public class Config {
     }
 
     public static class Avatars {
-        @Expose public String avatarUrl = "https://api.nucleoid.xyz/skin/face/256/";
+        @Expose public String avatarUrl = "https://api.nucleoid.xyz/skin/face/256/%s";
         @Expose public boolean useTextureId = false;
     }
 
