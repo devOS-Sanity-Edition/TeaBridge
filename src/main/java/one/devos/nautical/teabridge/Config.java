@@ -22,6 +22,7 @@ public class Config {
     }
 
     @Expose public Discord discord = new Discord();
+    @Expose public Avatars avatars = new Avatars();
     @Expose public Game game = new Game();
     @Expose public Crashes crashes = new Crashes();
 
@@ -30,6 +31,11 @@ public class Config {
         @Expose public String webhook = "";
 
         @Expose public int pkMessageDelay = 0;
+    }
+
+    public static class Avatars {
+        @Expose public String avatarUrl = "https://api.nucleoid.xyz/skin/face/256/";
+        @Expose public boolean useTextureId = false;
     }
 
     public static class Game {
