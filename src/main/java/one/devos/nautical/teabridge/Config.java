@@ -3,22 +3,23 @@ package one.devos.nautical.teabridge;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
-import one.devos.nautical.teabridge.util.JsonUtils;
-
 public class Config {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().disableHtmlEscaping().create();
     public static Config INSTANCE;
 
     public static void load() throws Exception {
         var configPath = PlatformUtil.getConfigDir().resolve("teabridge.json");
 
         if (Files.exists(configPath)) {
-            INSTANCE = JsonUtils.GSON.fromJson(Files.readString(configPath), Config.class);
+            INSTANCE = GSON.fromJson(Files.readString(configPath), Config.class);
         } else {
             INSTANCE = new Config();
         }
-        Files.writeString(configPath, JsonUtils.GSON.toJson(INSTANCE), StandardCharsets.UTF_8);
+        Files.writeString(configPath, GSON.toJson(INSTANCE), StandardCharsets.UTF_8);
     }
 
     @Expose public Discord discord = new Discord();
