@@ -1,20 +1,27 @@
 package one.devos.nautical.teabridge;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Consumer;
 
 import com.mojang.brigadier.CommandDispatcher;
 
-import eu.pb4.placeholders.api.node.LiteralNode;
-import eu.pb4.placeholders.api.node.parent.ParentNode;
-import eu.pb4.placeholders.api.parsers.MarkdownLiteParserV1;
+import dev.proxyfox.markt.MarkdownNode;
+import dev.proxyfox.markt.MarkdownParser;
+import dev.proxyfox.markt.MentionNode;
+import dev.proxyfox.markt.SymbolNode;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 
 public class PlatformUtil implements DedicatedServerModInitializer {
     public static Path getConfigDir() {
@@ -29,8 +36,60 @@ public class PlatformUtil implements DedicatedServerModInitializer {
         return Component.literal(text);
     }
 
+    public static MutableComponent translatable(String key) {
+        return Component.translatable(key);
+    }
+
+    // private static MutableComponent formatMarkdownNodes(List<MarkdownNode> nodes) {
+    //     var formatted = empty();
+    //     for (MarkdownNode node : nodes) {
+    //         System.out.println(node);
+    //         if (node instanceof SymbolNode symbolNode) {
+    //             var formattedChildren = formatMarkdownNodes(symbolNode.getNodes()); // this variable name is cursed
+    //             System.out.println(symbolNode.getLeft());
+    //             System.out.println(symbolNode.getRight());
+    //             switch (symbolNode.getLeft()) {
+    //                 case "**":
+    //                     formattedChildren = formattedChildren.withStyle(ChatFormatting.BOLD);
+    //                     break;
+    //                 case "`":
+    //                 case "``":
+    //                 case "```":
+    //                     formattedChildren = formattedChildren.withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC);
+    //                     break;
+    //                 case "||":
+    //                     formattedChildren = (literal("[").append(translatable("options.hidden")).append("]"))
+    //                         .withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, formattedChildren)))
+    //                         .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC);
+    //                     break;
+    //                 case "*":
+    //                 case "_":
+    //                     formattedChildren = formattedChildren.withStyle(ChatFormatting.ITALIC);
+    //                     break;
+    //                 case "__":
+    //                     formattedChildren = formattedChildren.withStyle(ChatFormatting.UNDERLINE);
+    //                     break;
+    //                 case "~~":
+    //                     formattedChildren = formattedChildren.withStyle(ChatFormatting.STRIKETHROUGH);
+    //                     break;
+    //                 default:
+    //                     break;
+    //             }
+    //             formatted = formatted.append(formattedChildren);
+    //         } else if (node instanceof MentionNode mentionNode) {
+    //             formatted = formatted.append(node.toString());
+    //         } else {
+    //             formatted = formatted.append(node.toString());
+    //         }
+    //     }
+    //     return formatted;
+    // }
+
     public static MutableComponent formatText(String text) {
-        return new ParentNode(MarkdownLiteParserV1.ALL.parseNodes(new LiteralNode(text))).toText(null, true).copy();
+        // var parser = MarkdownParser.Companion.getGlobalInstance();
+        // var root = parser.parse(text);
+        // return formatMarkdownNodes(root.getNodes());
+        return literal(text);
     }
 
     public static void registerCommand(Consumer<CommandDispatcher<CommandSourceStack>> consumer) {
@@ -44,5 +103,10 @@ public class PlatformUtil implements DedicatedServerModInitializer {
         ServerLifecycleEvents.SERVER_STARTING.register(TeaBridge::onServerStarting);
         ServerLifecycleEvents.SERVER_STARTED.register(TeaBridge::onServerStart);
         ServerLifecycleEvents.SERVER_STOPPED.register(TeaBridge::onServerStop);
+
+        var phaseId = new ResourceLocation("teabridge", "mirror");
+        ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(new ResourceLocation("switchy_proxy", "set_args"), phaseId);
+        ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(phaseId, new ResourceLocation("switchy_proxy", "clear"));
+        ServerMessageEvents.CHAT_MESSAGE.register(phaseId, TeaBridge::onChatMessage);
     }
 }

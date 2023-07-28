@@ -13,11 +13,16 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import one.devos.nautical.teabridge.discord.ChannelListener;
 import one.devos.nautical.teabridge.discord.Discord;
+import one.devos.nautical.teabridge.duck.PlayerWebHook;
 import one.devos.nautical.teabridge.util.CrashHandler;
+import one.devos.nautical.teabridge.util.StyledChatCompat;
 
 public class TeaBridge {
     public static final Logger LOGGER = LoggerFactory.getLogger("TeaBridge");
@@ -38,6 +43,7 @@ public class TeaBridge {
     }
 
     public static void onServerStarting(MinecraftServer server) {
+        if (Config.INSTANCE.debug) TeaBridge.LOGGER.warn("DEBUG MODE IS ENABLED, THIS WILL LOG EVERYTHING WILL CAUSE LAG SPIKES!!!!!!");
         Discord.send(Config.INSTANCE.game.serverStartingMessage);
     }
 
@@ -51,13 +57,21 @@ public class TeaBridge {
         Discord.stop();
     }
 
+    public static void onChatMessage(PlayerChatMessage message, ServerPlayer sender, ChatType.Bound params) {
+        if (sender != null) {
+            ((PlayerWebHook) sender).send(message);
+        } else {
+            Discord.send(StyledChatCompat.modify(message).getLeft());
+        }
+    }
+
     private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("teabridge").then(
             Commands.literal("reloadConfig").executes(command -> {
                 try {
                     Config.load();
                     command.getSource().sendSuccess(() -> Component.literal("Config reloaded!").withStyle(ChatFormatting.GREEN), false);
-                    command.getSource().sendSystemMessage(Component.literal("Warning: options in the discord category will not be reloaded!").withStyle(ChatFormatting.YELLOW));
+                    command.getSource().sendSystemMessage(Component.literal("Warning: options in the discord category except pk message delay will not be reloaded!").withStyle(ChatFormatting.YELLOW));
                 } catch (Exception e) {
                     command.getSource().sendFailure(Component.literal("Failed to reload config!").withStyle(ChatFormatting.RED));
                     LOGGER.warn("Failed to reload config : ", e);

@@ -50,6 +50,7 @@ public class Discord {
                 .build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
             var webHookDataResponse = JsonUtils.GSON.fromJson(response.body(), WebHookDataResponse.class);
+            if (Config.INSTANCE.debug) TeaBridge.LOGGER.warn("Webhook response : " + response.body());
             guild = Long.parseLong(webHookDataResponse.guildId);
             ChannelListener.INSTANCE.setChannel(Long.parseLong(webHookDataResponse.channelId));
 
@@ -60,6 +61,8 @@ public class Discord {
         } catch (Exception e) {
             TeaBridge.LOGGER.error("Exception initializing JDA", e);
         }
+
+        PKCompat.initIfEnabled(() -> jda != null);
     }
 
     public static void send(String message) {
@@ -69,11 +72,13 @@ public class Discord {
     public static void send(WebHook webHook, String message) {
         if (jda != null) {
             try {
+                if (Config.INSTANCE.debug) TeaBridge.LOGGER.warn("Sent webhook message json : " + webHook.jsonWithContent(message));
                 var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
                     .uri(URI.create(Config.INSTANCE.discord.webhook))
                     .POST(HttpRequest.BodyPublishers.ofString(webHook.jsonWithContent(message)))
                     .header("Content-Type", "application/json; charset=utf-8")
                     .build(), HttpResponse.BodyHandlers.ofString());
+                if (Config.INSTANCE.debug) TeaBridge.LOGGER.warn("Webhook message response : " + response.body());
                 if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
             } catch (Exception e) {
                 TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);

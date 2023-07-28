@@ -18,14 +18,13 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import one.devos.nautical.teabridge.PlatformUtil;
+import one.devos.nautical.teabridge.TeaBridge;
 
 public class FormattingUtils {
     public static MutableComponent formatUser(final boolean arrows, final User user, @Nullable final Member member) {
-        var mention = PlatformUtil.literal("@" + (member != null ? member.getEffectiveName() : user.getName()));
+        var mention = PlatformUtil.literal("@" + (member != null ? member.getEffectiveName() : user.getEffectiveName()));
 
-        var hoverText =
-            PlatformUtil.literal(user.getName()).append(
-            PlatformUtil.literal("#" + user.getDiscriminator()).withStyle(ChatFormatting.DARK_GRAY));
+        var hoverText = PlatformUtil.literal("@" + user.getName());
 
         if (member != null) {
             mention.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(member.getColorRaw())));
@@ -39,7 +38,7 @@ public class FormattingUtils {
             suffix = PlatformUtil.literal(">");
         }
 
-        return prefix.append(mention).append(suffix).withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText)));
+        return prefix.append(mention.withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText)))).append(suffix);
     }
 
     public static MutableComponent formatRoles(final Collection<Role> roles) {
@@ -87,7 +86,8 @@ public class FormattingUtils {
             case DEFAULT:
                 break;
             default:
-                throw new Exception("Message: " + message.getContentRaw() + " has a unknown message type: " + message.getType().toString());
+                TeaBridge.LOGGER.error("Message: " + message.getContentRaw() + " has a unknown message type: " + message.getType().toString());
+                return Optional.empty();
         }
 
         var messageContent = PlatformUtil.formatText(message.getContentDisplay());

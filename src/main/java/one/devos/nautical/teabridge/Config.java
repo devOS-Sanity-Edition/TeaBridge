@@ -27,11 +27,14 @@ public class Config {
     @Expose public Game game = new Game();
     @Expose public Crashes crashes = new Crashes();
 
+    @Expose public boolean debug = false;
+
     public static class Discord {
         @Expose public String token = "";
         @Expose public String webhook = "";
 
         @Expose public int pkMessageDelay = 0;
+        @Expose public boolean pkMessageDelayMilliseconds = true;
     }
 
     public static class Avatars {

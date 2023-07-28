@@ -11,11 +11,12 @@ import one.devos.nautical.teabridge.Config;
 import one.devos.nautical.teabridge.discord.Discord;
 import one.devos.nautical.teabridge.discord.WebHook;
 import one.devos.nautical.teabridge.duck.PlayerWebHook;
+import one.devos.nautical.teabridge.util.StyledChatCompat;
 
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayerMixin implements PlayerWebHook {
     private final WebHook teabridge$webHook = new WebHook(
-        () -> ((ServerPlayer) (Object) this).getDisplayName().getString(),
+        () -> StyledChatCompat.TEMP_USERNAME.orElse(((ServerPlayer) (Object) this).getDisplayName().getString()),
         () -> {
             ServerPlayer self = (ServerPlayer) (Object) this;
             if (Config.INSTANCE.avatars.useTextureId) {
