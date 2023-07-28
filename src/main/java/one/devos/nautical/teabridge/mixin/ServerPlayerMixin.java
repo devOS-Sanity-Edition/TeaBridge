@@ -1,5 +1,6 @@
 package one.devos.nautical.teabridge.mixin;
 
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -16,7 +17,14 @@ import one.devos.nautical.teabridge.util.StyledChatCompat;
 public abstract class ServerPlayerMixin implements PlayerWebHook {
     private final WebHook teabridge$webHook = new WebHook(
         () -> StyledChatCompat.TEMP_USERNAME.orElse(((ServerPlayer) (Object) this).getDisplayName().getString()),
-        () -> "https://api.nucleoid.xyz/skin/face/256/" + ((ServerPlayer) (Object) this).getStringUUID()
+        () -> {
+            ServerPlayer self = (ServerPlayer) (Object) this;
+            if (Config.INSTANCE.avatars.useTextureId) {
+                MinecraftProfileTexture skin = self.getServer().getSessionService().getTextures(self.getGameProfile(), true).get(MinecraftProfileTexture.Type.SKIN);
+                if (skin != null) return Config.INSTANCE.avatars.avatarUrl.formatted(skin.getHash());
+            }
+            return Config.INSTANCE.avatars.avatarUrl.formatted(self.getStringUUID());
+        }
     );
 
     @Override
