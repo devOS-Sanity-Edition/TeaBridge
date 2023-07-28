@@ -8,7 +8,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import one.devos.nautical.teabridge.PlatformUtil;
-import one.devos.nautical.teabridge.duck.MessageEventProxyTag;
 import one.devos.nautical.teabridge.util.FormattingUtils;
 
 public class ChannelListener extends ListenerAdapter {
@@ -26,16 +25,16 @@ public class ChannelListener extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event) {
-        PKCompat.await(event, proxiedEvent -> {
+    public void onMessageReceived(MessageReceivedEvent receivedEvent) {
+        PKCompat.await(receivedEvent, (event, proxied) -> {
             if (server == null) return;
 
             if (
                 !event.isFromGuild() ||
                 event.getChannel().getIdLong() != channel ||
-                (event.isWebhookMessage() && !((MessageEventProxyTag) (Object) event).teabridge$isProxied()) ||
-                (!event.isWebhookMessage() && ((MessageEventProxyTag) (Object) event).teabridge$isProxied())
-                ) return;
+                (event.isWebhookMessage() && !proxied) ||
+                (!event.isWebhookMessage() && proxied)
+            ) return;
 
             final var playerList = server.getPlayerList();
 
