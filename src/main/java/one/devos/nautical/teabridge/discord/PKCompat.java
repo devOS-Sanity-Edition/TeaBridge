@@ -19,8 +19,8 @@ class PKCompat {
     private static final ConcurrentLinkedQueue<ScheduledEvent> scheduled = new ConcurrentLinkedQueue<>();
 
     static void initIfEnabled(BooleanSupplier running) {
-        if (Config.INSTANCE.discord.pkMessageDelay > 0)
-        new Thread(() -> {
+        if (!(Config.INSTANCE.discord.pkMessageDelay > 0)) return;
+        var thread = new Thread(() -> {
             while (running.getAsBoolean()) {
                 scheduled.removeIf(scheduledEvent -> {
                     if (Instant.now().compareTo(scheduledEvent.instant) >= 0) {
@@ -30,7 +30,9 @@ class PKCompat {
                     return false;
                 });
             }
-        }).start();
+        }, "TeaBridge Chat Message Scheduler");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     static void await(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler) {

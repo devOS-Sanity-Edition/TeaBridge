@@ -9,14 +9,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import one.devos.nautical.teabridge.Config;
 import one.devos.nautical.teabridge.discord.Discord;
-import one.devos.nautical.teabridge.discord.WebHook;
+import one.devos.nautical.teabridge.discord.ProtoWebHook;
 import one.devos.nautical.teabridge.duck.PlayerWebHook;
-import one.devos.nautical.teabridge.util.StyledChatCompat;
 
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayerMixin implements PlayerWebHook {
-    private final WebHook teabridge$webHook = new WebHook(
-        () -> StyledChatCompat.TEMP_USERNAME.orElse(((ServerPlayer) (Object) this).getDisplayName().getString()),
+    private final ProtoWebHook teabridge$webHook = new ProtoWebHook(
+        () -> ((ServerPlayer) (Object) this).getDisplayName().getString(),
         () -> {
             ServerPlayer self = (ServerPlayer) (Object) this;
             if (Config.INSTANCE.avatars.useTextureId) {
@@ -28,7 +27,7 @@ public abstract class ServerPlayerMixin implements PlayerWebHook {
     );
 
     @Override
-    public WebHook getWebHook() {
+    public ProtoWebHook getWebHook() {
         return teabridge$webHook;
     }
 

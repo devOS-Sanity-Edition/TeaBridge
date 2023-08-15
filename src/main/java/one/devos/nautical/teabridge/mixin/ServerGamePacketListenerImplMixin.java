@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import one.devos.nautical.teabridge.Config;
 import one.devos.nautical.teabridge.discord.Discord;
 import one.devos.nautical.teabridge.duck.PlayerWebHook;
 
@@ -26,7 +27,7 @@ public abstract class ServerGamePacketListenerImplMixin {
     @ModifyArg(method = "onDisconnect", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
     private Component teabridge$mirrorLeaveMessage(Component leaveMessage) {
         PlayerWebHook.ONLINE.remove((PlayerWebHook) player);
-        Discord.send(leaveMessage.getString());
+        if (Config.INSTANCE.game.mirrorLeave) Discord.send(leaveMessage.getString());
         return leaveMessage;
     }
 }

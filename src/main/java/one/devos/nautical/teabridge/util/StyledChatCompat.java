@@ -12,8 +12,6 @@ import net.minecraft.network.chat.PlayerChatMessage;
 
 // Uses the junkyiness of java to do styled chat support without a compile time dep
 public class StyledChatCompat {
-    public static Optional<String> TEMP_USERNAME = Optional.empty();
-
     private static MethodHandle METHOD = null;
     static {
         try {

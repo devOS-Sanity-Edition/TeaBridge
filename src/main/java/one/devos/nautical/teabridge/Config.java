@@ -48,8 +48,11 @@ public class Config {
         @Expose public String serverStopMessage = "Server has stopped!";
         @Expose public String serverCrashMessage = "Server has crashed!";
 
+        @Expose public boolean mirrorJoin = true;
+        @Expose public boolean mirrorLeave = true;
         @Expose public boolean mirrorDeath = true;
         @Expose public boolean mirrorAdvancements = true;
+        @Expose public boolean mirrorCommandMessages = true;
     }
 
     public static class Crashes {

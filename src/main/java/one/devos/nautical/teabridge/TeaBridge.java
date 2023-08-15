@@ -1,6 +1,7 @@
 package one.devos.nautical.teabridge;
 
 import java.net.http.HttpClient;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +53,9 @@ public class TeaBridge {
         Discord.send(Config.INSTANCE.game.serverStartMessage);
     }
 
+    @SuppressWarnings("deprecation")
     public static void onServerStop(MinecraftServer server) {
-        if (!CrashHandler.CRASH_VALUE.get()) Discord.send(Config.INSTANCE.game.serverStopMessage);
+        if (!CrashHandler.CRASH_VALUE.get()) Discord.scheduledSend(new Discord.ScheduledMessage(Discord.WEB_HOOK, Config.INSTANCE.game.serverStopMessage, Optional.empty()));
         Discord.stop();
     }
 
@@ -65,13 +67,17 @@ public class TeaBridge {
         }
     }
 
+    public static void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
+        if (!Config.INSTANCE.game.mirrorCommandMessages) return;
+        if (!source.isPlayer()) Discord.send(message.signedContent());
+    }
+
     private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("teabridge").then(
             Commands.literal("reloadConfig").executes(command -> {
                 try {
                     Config.load();
                     command.getSource().sendSuccess(() -> Component.literal("Config reloaded!").withStyle(ChatFormatting.GREEN), false);
-                    command.getSource().sendSystemMessage(Component.literal("Warning: options in the discord category except pk message delay will not be reloaded!").withStyle(ChatFormatting.YELLOW));
                 } catch (Exception e) {
                     command.getSource().sendFailure(Component.literal("Failed to reload config!").withStyle(ChatFormatting.RED));
                     LOGGER.warn("Failed to reload config : ", e);

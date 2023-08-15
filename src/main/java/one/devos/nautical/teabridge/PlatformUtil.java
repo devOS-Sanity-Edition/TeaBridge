@@ -6,10 +6,6 @@ import java.util.function.Consumer;
 
 import com.mojang.brigadier.CommandDispatcher;
 
-import dev.proxyfox.markt.MarkdownNode;
-import dev.proxyfox.markt.MarkdownParser;
-import dev.proxyfox.markt.MentionNode;
-import dev.proxyfox.markt.SymbolNode;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -108,5 +104,7 @@ public class PlatformUtil implements DedicatedServerModInitializer {
         ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(new ResourceLocation("switchy_proxy", "set_args"), phaseId);
         ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(phaseId, new ResourceLocation("switchy_proxy", "clear"));
         ServerMessageEvents.CHAT_MESSAGE.register(phaseId, TeaBridge::onChatMessage);
+
+        ServerMessageEvents.COMMAND_MESSAGE.register(TeaBridge::onCommandMessage);
     }
 }

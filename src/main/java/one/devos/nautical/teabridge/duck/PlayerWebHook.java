@@ -7,23 +7,20 @@ import com.google.common.collect.Lists;
 
 import net.minecraft.network.chat.PlayerChatMessage;
 import one.devos.nautical.teabridge.discord.Discord;
-import one.devos.nautical.teabridge.discord.WebHook;
+import one.devos.nautical.teabridge.discord.ProtoWebHook;
 import one.devos.nautical.teabridge.util.StyledChatCompat;
 
 public interface PlayerWebHook {
     final List<PlayerWebHook> ONLINE = Lists.newArrayList();
 
-    WebHook getWebHook();
+    ProtoWebHook getWebHook();
 
-    default void send(String message) {
-        Discord.send(getWebHook(), message);
+    default void send(String message, Optional<String> displayName) {
+        Discord.send(getWebHook(), message, displayName);
     }
 
     default void send(PlayerChatMessage message) {
         var modified = StyledChatCompat.modify(message);
-
-        StyledChatCompat.TEMP_USERNAME = modified.getRight();
-        send(modified.getLeft());
-        StyledChatCompat.TEMP_USERNAME = Optional.empty();
+        send(modified.getLeft(), modified.getRight());
     }
 }
