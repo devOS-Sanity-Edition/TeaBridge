@@ -4,7 +4,7 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 
@@ -16,19 +16,18 @@ import one.devos.nautical.teabridge.TeaBridge;
 class PKCompat {
     private static final String MESSAGE_ENDPOINT = "https://api.pluralkit.me/v2/messages/{id}";
 
-    private static final ConcurrentLinkedQueue<ScheduledEvent> scheduled = new ConcurrentLinkedQueue<>();
+    private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
     static void initIfEnabled(BooleanSupplier running) {
         if (!(Config.INSTANCE.discord.pkMessageDelay > 0)) return;
         var thread = new Thread(() -> {
             while (running.getAsBoolean()) {
-                scheduled.removeIf(scheduledEvent -> {
-                    if (Instant.now().compareTo(scheduledEvent.instant) >= 0) {
-                        scheduledEvent.handler.accept(scheduledEvent.event, isProxied(scheduledEvent.event.getMessageId()));
-                        return true;
-                    }
-                    return false;
-                });
+                while (scheduledMessages.peek() == null) {}
+                var message = scheduledMessages.peek();
+                if (Instant.now().compareTo(message.instant) >= 0) {
+                    message.handler.accept(message.event, isProxied(message.event.getMessageId()));
+                    scheduledMessages.remove();
+                }
             }
         }, "TeaBridge Chat Message Scheduler");
         thread.setDaemon(true);
@@ -37,7 +36,7 @@ class PKCompat {
 
     static void await(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler) {
         if (Config.INSTANCE.discord.pkMessageDelay > 0) {
-            scheduled.add(new ScheduledEvent(
+            scheduledMessages.add(new ScheduledMessage(
                 event,
                 handler,
                 Config.INSTANCE.discord.pkMessageDelayMilliseconds ?
@@ -60,5 +59,5 @@ class PKCompat {
         }
     }
 
-    private record ScheduledEvent(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler, Instant instant) { }
+    private record ScheduledMessage(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler, Instant instant) { }
 }

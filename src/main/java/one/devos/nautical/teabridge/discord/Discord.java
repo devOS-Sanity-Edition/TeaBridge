@@ -5,7 +5,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
 import com.google.gson.annotations.Expose;
@@ -22,19 +22,21 @@ import one.devos.nautical.teabridge.Config;
 public class Discord {
     private static JDA jda;
     private static long guild;
+    public static long selfId;
 
     private static Member cachedSelfMember;
     private static Supplier<Member> cachingSelfMemberGet = () -> {
         if (cachedSelfMember == null) cachedSelfMember = jda.getGuildById(guild).getSelfMember();
         return cachedSelfMember;
     };
+
     public static final ProtoWebHook WEB_HOOK = new ProtoWebHook(
         () -> cachingSelfMemberGet.get().getEffectiveName(),
         () -> cachingSelfMemberGet.get().getEffectiveAvatarUrl()
     );
 
     private static Thread messageThread;
-    private static final ConcurrentLinkedQueue<ScheduledMessage> scheduledMessages = new ConcurrentLinkedQueue<>();
+    private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
     public static void start() {
         if (Config.INSTANCE.discord.token.isEmpty()) {
@@ -63,6 +65,8 @@ public class Discord {
                 .enableIntents(List.of(GatewayIntent.MESSAGE_CONTENT))
                 .addEventListeners(ChannelListener.INSTANCE, CommandUtils.INSTANCE)
                 .build();
+
+            selfId = jda.getSelfUser().getIdLong();
         } catch (Exception e) {
             TeaBridge.LOGGER.error("Exception initializing JDA", e);
             return;
@@ -70,7 +74,9 @@ public class Discord {
 
         messageThread = new Thread(() -> {
             while (jda != null) {
-                if (!scheduledMessages.isEmpty()) Discord.scheduledSend(scheduledMessages.remove());
+                try {
+                    Discord.scheduledSend(scheduledMessages.take());
+                } catch (InterruptedException e) { }
             }
         }, "TeaBridge Discord Message Scheduler");
         messageThread.setDaemon(true);
