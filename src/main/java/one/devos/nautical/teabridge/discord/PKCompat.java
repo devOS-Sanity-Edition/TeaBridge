@@ -6,7 +6,6 @@ import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiConsumer;
-import java.util.function.BooleanSupplier;
 
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import one.devos.nautical.teabridge.Config;
@@ -18,10 +17,10 @@ class PKCompat {
 
     private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
-    static void initIfEnabled(BooleanSupplier running) {
+    static void initIfEnabled() {
         if (!(Config.INSTANCE.discord.pkMessageDelay > 0)) return;
         var thread = new Thread(() -> {
-            while (running.getAsBoolean()) {
+            while (true) {
                 while (scheduledMessages.peek() == null) {}
                 var message = scheduledMessages.peek();
                 if (Instant.now().compareTo(message.instant) >= 0) {

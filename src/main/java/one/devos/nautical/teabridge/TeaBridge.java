@@ -53,9 +53,8 @@ public class TeaBridge {
         Discord.send(Config.INSTANCE.game.serverStartMessage);
     }
 
-    @SuppressWarnings("deprecation")
     public static void onServerStop(MinecraftServer server) {
-        if (!CrashHandler.CRASH_VALUE.get()) Discord.scheduledSend(new Discord.ScheduledMessage(Discord.WEB_HOOK, Config.INSTANCE.game.serverStopMessage, Optional.empty()));
+        if (!CrashHandler.CRASH_VALUE.get()) Discord.send(Config.INSTANCE.game.serverStopMessage);
         Discord.stop();
     }
 

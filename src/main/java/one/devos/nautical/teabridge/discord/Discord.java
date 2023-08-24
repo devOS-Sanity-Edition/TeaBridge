@@ -73,7 +73,7 @@ public class Discord {
         }
 
         messageThread = new Thread(() -> {
-            while (jda != null) {
+            while (true) {
                 try {
                     Discord.scheduledSend(scheduledMessages.take());
                 } catch (InterruptedException e) { }
@@ -82,7 +82,7 @@ public class Discord {
         messageThread.setDaemon(true);
         messageThread.start();
 
-        PKCompat.initIfEnabled(() -> jda != null);
+        PKCompat.initIfEnabled();
     }
 
     public static void send(String message) {
@@ -93,10 +93,6 @@ public class Discord {
         scheduledMessages.add(new ScheduledMessage(webHook, message, displayName));
     }
 
-    /*
-     * Do not use this method unless you want to send a message right before jda shutdowns
-    */
-    @Deprecated
     public static boolean scheduledSend(ScheduledMessage scheduledMessage) {
         var webHook = scheduledMessage.webHook;
         var message = scheduledMessage.message;
@@ -122,10 +118,6 @@ public class Discord {
         if (jda != null) {
             jda.shutdown();
             jda = null;
-            try {
-                messageThread.join();
-            } catch (InterruptedException e) { }
-            messageThread = null;
         }
     }
 
