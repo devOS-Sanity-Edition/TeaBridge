@@ -56,6 +56,30 @@ TeaBridge is another Fabric/Quilt mod that bridges your Discord and Minecraft ch
 }
 ```
 
+## Valid Config
+
+```json5
+{
+  "discord": { // dont worry all of these are expired, but they are Valid inputs
+    "token": "NzQ5MjM1NTk4NzMyMjk2MjA0.GnI_ax.ThhYNDCRQoqc6wRScUIomB-jq3ZMbv_IZwGOmw", 
+    "guild": "1145637533141700618",
+    "channel": "1145637533577924680",
+    "webhook": "https://discord.com/api/webhooks/1145637647440687184/VdqcLdm7kFYrRNUfQT2X6Kmy6bACyZp9MnKCTwH0o0V79lg9CIsjd9rXOAjt0JwIZmTd"
+  },
+  "game": {
+    "serverStartingMessage": "Server is starting...",
+    "serverStartMessage": "Server has started!",
+    "serverStopMessage": "Server has stopped!",
+    "serverCrashMessage": "Server has crashed!",
+    "mirrorDeath": true,
+    "mirrorAdvancements": true
+  },
+  "crashes": {
+    "uploadToMclogs": true
+  }
+}
+```
+
 ## Development
 TeaBridge is on devOS' Maven
 
