@@ -37,22 +37,30 @@ TeaBridge is another Fabric/Quilt mod that bridges your Discord and Minecraft ch
 ```json5
 {
   "discord": {
-    "token": "",
-    "guild": "",
-    "channel": "",
-    "webhook": ""
+    "token": "Nope",
+    "webhook": "Nope",
+    "pkMessageDelay": 0,
+    "pkMessageDelayMilliseconds": true
+  },
+  "avatars": {
+    "avatarUrl": "https://api.nucleoid.xyz/skin/face/256/%s",
+    "useTextureId": false
   },
   "game": {
     "serverStartingMessage": "Server is starting...",
     "serverStartMessage": "Server has started!",
     "serverStopMessage": "Server has stopped!",
     "serverCrashMessage": "Server has crashed!",
+    "mirrorJoin": true,
+    "mirrorLeave": true,
     "mirrorDeath": true,
-    "mirrorAdvancements": true
+    "mirrorAdvancements": true,
+    "mirrorCommandMessages": true
   },
   "crashes": {
     "uploadToMclogs": true
-  }
+  },
+  "debug": false
 }
 ```
 
@@ -60,23 +68,31 @@ TeaBridge is another Fabric/Quilt mod that bridges your Discord and Minecraft ch
 
 ```json5
 {
-  "discord": { // dont worry all of these are expired, but they are Valid inputs
-    "token": "NzQ5MjM1NTk4NzMyMjk2MjA0.GnI_ax.ThhYNDCRQoqc6wRScUIomB-jq3ZMbv_IZwGOmw", 
-    "guild": "1145637533141700618",
-    "channel": "1145637533577924680",
-    "webhook": "https://discord.com/api/webhooks/1145637647440687184/VdqcLdm7kFYrRNUfQT2X6Kmy6bACyZp9MnKCTwH0o0V79lg9CIsjd9rXOAjt0JwIZmTd"
+  "discord": {
+    "token": "NzQ5MjM1NTk4NzMyMjk2MjA0.GnI_ax.ThhYNDCRQoqc6wRScUIomB-jq3ZMbv_IZwGOmw",
+    "webhook": "https://discord.com/api/webhooks/1145637647440687184/VdqcLdm7kFYrRNUfQT2X6Kmy6bACyZp9MnKCTwH0o0V79lg9CIsjd9rXOAjt0JwIZmTd",
+    "pkMessageDelay": 0,
+    "pkMessageDelayMilliseconds": true
+  },
+  "avatars": {
+    "avatarUrl": "https://api.nucleoid.xyz/skin/face/256/%s",
+    "useTextureId": false
   },
   "game": {
     "serverStartingMessage": "Server is starting...",
     "serverStartMessage": "Server has started!",
     "serverStopMessage": "Server has stopped!",
     "serverCrashMessage": "Server has crashed!",
+    "mirrorJoin": true,
+    "mirrorLeave": true,
     "mirrorDeath": true,
-    "mirrorAdvancements": true
+    "mirrorAdvancements": true,
+    "mirrorCommandMessages": true
   },
   "crashes": {
     "uploadToMclogs": true
-  }
+  },
+  "debug": false
 }
 ```
 
