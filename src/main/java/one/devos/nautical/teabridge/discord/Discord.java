@@ -3,7 +3,6 @@ package one.devos.nautical.teabridge.discord;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
@@ -21,12 +20,19 @@ import one.devos.nautical.teabridge.Config;
 
 public class Discord {
     private static JDA jda;
-    private static long guild;
+    private static long guildId;
     public static long selfId;
 
     private static Member cachedSelfMember;
     private static Supplier<Member> cachingSelfMemberGet = () -> {
-        if (cachedSelfMember == null) cachedSelfMember = jda.getGuildById(guild).getSelfMember();
+        if (cachedSelfMember == null) {
+            var guild = jda.getGuildById(guildId);
+            if (guild != null) {
+                cachedSelfMember = guild.getSelfMember();
+            } else {
+                throw new RuntimeException("Guild is null. This most likely means you are missing the message content intent, please enable it within the app's settings in the discord developer portal.");
+            }
+        }
         return cachedSelfMember;
     };
 
@@ -58,11 +64,11 @@ public class Discord {
             if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
             var webHookDataResponse = JsonUtils.GSON.fromJson(response.body(), WebHookDataResponse.class);
             if (Config.INSTANCE.debug) TeaBridge.LOGGER.warn("Webhook response : " + response.body());
-            guild = Long.parseLong(webHookDataResponse.guildId);
+            guildId = Long.parseLong(webHookDataResponse.guildId);
             ChannelListener.INSTANCE.setChannel(Long.parseLong(webHookDataResponse.channelId));
 
             jda = JDABuilder.createDefault(Config.INSTANCE.discord.token)
-                .enableIntents(List.of(GatewayIntent.MESSAGE_CONTENT))
+                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .addEventListeners(ChannelListener.INSTANCE, CommandUtils.INSTANCE)
                 .build();
 
