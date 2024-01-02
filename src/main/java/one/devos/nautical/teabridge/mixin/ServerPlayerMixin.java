@@ -19,7 +19,7 @@ public abstract class ServerPlayerMixin implements PlayerWebHook {
         () -> {
             ServerPlayer self = (ServerPlayer) (Object) this;
             if (Config.INSTANCE.avatars.useTextureId) {
-                MinecraftProfileTexture skin = self.getServer().getSessionService().getTextures(self.getGameProfile(), false).get(MinecraftProfileTexture.Type.SKIN);
+                MinecraftProfileTexture skin = self.getServer().getSessionService().getTextures(self.getGameProfile()).skin();
                 if (skin != null) return Config.INSTANCE.avatars.avatarUrl.formatted(skin.getHash());
             }
             return Config.INSTANCE.avatars.avatarUrl.formatted(self.getStringUUID());

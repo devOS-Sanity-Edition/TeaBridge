@@ -24,7 +24,7 @@ public abstract class ServerGamePacketListenerImplMixin {
         PlayerWebHook.ONLINE.add((PlayerWebHook) player);
     }
 
-    @ModifyArg(method = "onDisconnect", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
+    @ModifyArg(method = "removePlayerFromWorld", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
     private Component teabridge$mirrorLeaveMessage(Component leaveMessage) {
         PlayerWebHook.ONLINE.remove((PlayerWebHook) player);
         if (Config.INSTANCE.game.mirrorLeave) Discord.send(leaveMessage.getString());
