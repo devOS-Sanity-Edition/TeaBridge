@@ -1,7 +1,6 @@
 package one.devos.nautical.teabridge;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.function.Consumer;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -11,12 +10,9 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 
 public class PlatformUtil implements DedicatedServerModInitializer {

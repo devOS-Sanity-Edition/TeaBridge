@@ -1,7 +1,6 @@
 package one.devos.nautical.teabridge;
 
 import java.net.http.HttpClient;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,12 +1,11 @@
 plugins {
-	id "fabric-loom" version "1.0-SNAPSHOT"
+	id "fabric-loom" version "1.6.9"
 	id "maven-publish"
-	id "io.github.juuxel.loom-vineflower" version "1.+"
 	id "org.ajoberstar.grgit" version '4.1.0'
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+sourceCompatibility = JavaVersion.VERSION_21
+targetCompatibility = JavaVersion.VERSION_21
 
 archivesBaseName = project.archives_base_name
 version = "${project.mod_version}-mc${project.minecraft_version}-rev.${grgit.head().abbreviatedId}"
@@ -49,7 +48,7 @@ dependencies {
 	include("com.squareup.okio:okio-jvm:3.2.0")
 	include("com.neovisionaries:nv-websocket-client:2.14")
 	// for "squareup.x" libs (they all use kotlin) and MarKt
-	modLocalRuntime("net.fabricmc:fabric-language-kotlin:1.9.1+kotlin.1.8.10")
+	modLocalRuntime("net.fabricmc:fabric-language-kotlin:1.10.19+kotlin.1.9.23")
 }
 
 processResources {
