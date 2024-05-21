@@ -16,14 +16,6 @@ repositories {
 		url = "https://m2.dv8tion.net/releases/"
 		content { includeGroup "net.dv8tion" }
 	}
-	maven {
-		url = "https://maven.nucleoid.xyz/"
-		content { includeGroup "eu.pb4" }
-	}
-	maven {
-		url = "https://maven.proxyfox.dev/"
-		content { includeGroup "dev.proxyfox" }
-	}
 }
 
 dependencies {
@@ -36,19 +28,10 @@ dependencies {
 	modImplementation(fabricApi.module("fabric-lifecycle-events-v1", project.fabric_version))
 	modImplementation(fabricApi.module("fabric-message-api-v1", project.fabric_version))
 
-	include(implementation("net.dv8tion:JDA:5.0.0-beta.13"){
+	include(implementation("net.dv8tion:JDA:5.0.0-beta.24"){
 		exclude module: "opus-java"
 	})
-	include("net.sf.trove4j:trove4j:3.0.3")
-	include("org.apache.commons:commons-collections4:4.4")
-	include("com.fasterxml.jackson.core:jackson-core:2.14.1")
-	include("com.fasterxml.jackson.core:jackson-databind:2.14.1")
-	include("com.fasterxml.jackson.core:jackson-annotations:2.14.1")
-	include("com.squareup.okhttp3:okhttp:4.9.3")
-	include("com.squareup.okio:okio-jvm:3.2.0")
-	include("com.neovisionaries:nv-websocket-client:2.14")
-	// for "squareup.x" libs (they all use kotlin) and MarKt
-	modLocalRuntime("net.fabricmc:fabric-language-kotlin:1.10.19+kotlin.1.9.23")
+	modLocalRuntime("net.fabricmc:fabric-language-kotlin:1.10.20+kotlin.1.9.24")
 }
 
 processResources {
