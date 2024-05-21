@@ -56,7 +56,7 @@ public class Discord {
 
             jda = JDABuilder.createDefault(TeaBridge.config.discord().token())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                .addEventListeners(ChannelListener.INSTANCE, CommandUtils.INSTANCE)
+                .addEventListeners(ChannelListener.INSTANCE)
                 .build();
 
             selfMember = Suppliers.memoize(() -> {

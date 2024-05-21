@@ -4,7 +4,13 @@ import java.net.http.HttpClient;
 import java.nio.file.Path;
 
 import com.mojang.serialization.DataResult;
+import net.fabricmc.api.DedicatedServerModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +31,7 @@ import one.devos.nautical.teabridge.duck.PlayerWebHook;
 import one.devos.nautical.teabridge.util.CrashHandler;
 import one.devos.nautical.teabridge.util.StyledChatCompat;
 
-public class TeaBridge {
+public class TeaBridge implements DedicatedServerModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("TeaBridge");
 
     public static final HttpClient CLIENT = HttpClient.newBuilder().build();
@@ -35,31 +41,42 @@ public class TeaBridge {
 
     public static Config config = Config.DEFAULT;
 
-    public static void initialize() {
+    public void onInitializeServer() {
+        ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
+        ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStart);
+        ServerLifecycleEvents.SERVER_STOPPED.register(this::onServerStop);
+
+        ResourceLocation phaseId = new ResourceLocation(MOD_ID, "mirror");
+        ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(new ResourceLocation("switchy_proxy", "set_args"), phaseId);
+        ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(phaseId, new ResourceLocation("switchy_proxy", "clear"));
+        ServerMessageEvents.CHAT_MESSAGE.register(phaseId, this::onChatMessage);
+
+        ServerMessageEvents.COMMAND_MESSAGE.register(this::onCommandMessage);
+
+        CommandRegistrationCallback.EVENT.register(this::registerCommands);
+
         Config.load(CONFIG_PATH)
                 .ifError(e -> LOGGER.error("Failed to load config using defaults : {}", e))
                 .ifSuccess(loaded -> config = loaded);
         Discord.start();
-
-        PlatformUtil.registerCommand(TeaBridge::registerCommands);
     }
 
-    public static void onServerStarting(MinecraftServer server) {
+    private void onServerStarting(MinecraftServer server) {
         if (TeaBridge.config.debug()) TeaBridge.LOGGER.warn("DEBUG MODE IS ENABLED, THIS WILL LOG EVERYTHING WILL CAUSE LAG SPIKES!!!!!!");
         Discord.send(TeaBridge.config.game().serverStartingMessage());
     }
 
-    public static void onServerStart(MinecraftServer server) {
+    private void onServerStart(MinecraftServer server) {
         ChannelListener.INSTANCE.setServer(server);
         Discord.send(TeaBridge.config.game().serverStartMessage());
     }
 
-    public static void onServerStop(MinecraftServer server) {
+    private void onServerStop(MinecraftServer server) {
         if (!CrashHandler.CRASH_VALUE.get()) Discord.send(TeaBridge.config.game().serverStopMessage());
         Discord.stop();
     }
 
-    public static void onChatMessage(PlayerChatMessage message, ServerPlayer sender, ChatType.Bound params) {
+    private void onChatMessage(PlayerChatMessage message, ServerPlayer sender, ChatType.Bound params) {
         if (sender != null) {
             ((PlayerWebHook) sender).send(message);
         } else {
@@ -67,12 +84,12 @@ public class TeaBridge {
         }
     }
 
-    public static void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
+    private void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
         if (!TeaBridge.config.game().mirrorCommandMessages()) return;
         if (!source.isPlayer()) Discord.send(message.signedContent());
     }
 
-    private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+    private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess, Commands.CommandSelection environment) {
         dispatcher.register(Commands.literal("teabridge")
                 .requires(source -> source.hasPermission(2))
                 .then(

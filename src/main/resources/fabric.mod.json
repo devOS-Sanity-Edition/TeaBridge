@@ -20,7 +20,7 @@
   "environment": "server",
   "entrypoints": {
     "server": [
-      "one.devos.nautical.teabridge.PlatformUtil"
+      "one.devos.nautical.teabridge.TeaBridge"
     ]
   },
   "mixins": [
