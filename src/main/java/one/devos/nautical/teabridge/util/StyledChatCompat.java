@@ -3,7 +3,6 @@ package one.devos.nautical.teabridge.util;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -19,8 +18,8 @@ public class StyledChatCompat {
             var lookup = MethodHandles.lookup();
             var extSignedMessage = lookup.findClass("eu.pb4.styledchat.ducks.ExtSignedMessage");
             METHOD = lookup.findVirtual(extSignedMessage, "styledChat_getArg", MethodType.methodType(Component.class, String.class));
-        } catch (Throwable e) { }
-    };
+        } catch (Throwable ignored) { }
+    }
     private static boolean USE_COMPAT = true;
 
     public static Pair<String, @Nullable String> modify(PlayerChatMessage message) {

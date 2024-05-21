@@ -31,7 +31,6 @@ public class Discord {
         () -> selfMember.get().getEffectiveAvatarUrl()
     );
 
-    private static Thread messageThread;
     private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
     public static void start() {
@@ -74,11 +73,11 @@ public class Discord {
             return;
         }
 
-        messageThread = new Thread(() -> {
+        Thread messageThread = new Thread(() -> {
             while (true) {
                 try {
                     Discord.scheduledSend(scheduledMessages.take());
-                } catch (InterruptedException e) { }
+                } catch (InterruptedException ignored) { }
             }
         }, "TeaBridge Discord Message Scheduler");
         messageThread.setDaemon(true);

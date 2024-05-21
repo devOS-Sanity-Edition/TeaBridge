@@ -8,7 +8,9 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import one.devos.nautical.teabridge.PlatformUtil;
+import one.devos.nautical.teabridge.TeaBridge;
 import one.devos.nautical.teabridge.util.FormattingUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ChannelListener extends ListenerAdapter {
     public static final ChannelListener INSTANCE = new ChannelListener();
@@ -25,7 +27,7 @@ public class ChannelListener extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent receivedEvent) {
+    public void onMessageReceived(@NotNull MessageReceivedEvent receivedEvent) {
         PKCompat.await(receivedEvent, (event, proxied) -> {
             if (server == null) return;
 
@@ -43,10 +45,10 @@ public class ChannelListener extends ListenerAdapter {
             try {
                 formattedMessage = FormattingUtils.formatMessage(event.getMessage());
             } catch (Exception e) {
-                e.printStackTrace();
+                TeaBridge.LOGGER.error("Exception when handling message : ", e);
                 formattedMessage = Optional.of(PlatformUtil.literal("Exception when handling message, check log for details!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
             }
-            if (playerList != null && formattedMessage.isPresent()) playerList.broadcastSystemMessage(formattedMessage.get(), false);
+            formattedMessage.ifPresent(mutableComponent -> playerList.broadcastSystemMessage(mutableComponent, false));
         });
     }
 }

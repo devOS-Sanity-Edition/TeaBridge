@@ -14,7 +14,7 @@ import one.devos.nautical.teabridge.util.CrashHandler;
 @Mixin(CrashReport.class)
 public abstract class CrashReportMixin {
     @Inject(method = "saveToFile", at = @At("HEAD"))
-    private void teabridge$uploadCrash(File file, CallbackInfoReturnable<Boolean> cir) {
+    private void uploadCrash(File file, CallbackInfoReturnable<Boolean> cir) {
         CrashHandler.CRASH_VALUE.crash(() -> {
             if (Config.INSTANCE.crashes().uploadToMclogs()) CrashHandler.uploadAndSend((CrashReport) (Object) this);
         });

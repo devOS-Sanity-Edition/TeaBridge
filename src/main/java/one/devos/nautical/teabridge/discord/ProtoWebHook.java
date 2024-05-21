@@ -11,7 +11,7 @@ import one.devos.nautical.teabridge.util.JsonUtils;
 import org.jetbrains.annotations.Nullable;
 
 public record ProtoWebHook(Supplier<String> username, Supplier<String> avatar) {
-    public Message createMessage(String content, @Nullable String displayName) throws Exception {
+    public Message createMessage(String content, @Nullable String displayName) {
         return new Message(content, AllowedMentions.INSTANCE, displayName != null ? displayName : this.username.get(), this.avatar.get());
     }
 
@@ -34,9 +34,5 @@ public record ProtoWebHook(Supplier<String> username, Supplier<String> avatar) {
         public static final Codec<AllowedMentions> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.listOf().fieldOf("parse").forGetter(AllowedMentions::parse)
         ).apply(instance, AllowedMentions::new));
-
-        public DataResult<String> toJson() {
-            return CODEC.encodeStart(JsonOps.INSTANCE, this).map(JsonUtils.GSON::toJson);
-        }
     }
 }

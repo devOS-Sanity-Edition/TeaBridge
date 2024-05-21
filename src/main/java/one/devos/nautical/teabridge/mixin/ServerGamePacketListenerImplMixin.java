@@ -1,6 +1,5 @@
 package one.devos.nautical.teabridge.mixin;
 
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,15 +16,16 @@ import one.devos.nautical.teabridge.duck.PlayerWebHook;
 
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImplMixin {
-    @Shadow @Final private ServerPlayer player;
+    @Shadow
+    public ServerPlayer player;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void teabridge$makePlayerWebhookOnline(CallbackInfo ci) {
+    private void makePlayerWebhookOnline(CallbackInfo ci) {
         PlayerWebHook.ONLINE.add((PlayerWebHook) player);
     }
 
     @ModifyArg(method = "removePlayerFromWorld", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
-    private Component teabridge$mirrorLeaveMessage(Component leaveMessage) {
+    private Component mirrorLeaveMessage(Component leaveMessage) {
         PlayerWebHook.ONLINE.remove((PlayerWebHook) player);
         if (Config.INSTANCE.game().mirrorLeave()) Discord.send(leaveMessage.getString());
         return leaveMessage;

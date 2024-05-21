@@ -33,12 +33,12 @@ public class CrashHandler {
     };
 
     public static void uploadAndSend(final CrashReport crash) {
-        String crashMessage = null;
+        String crashMessage;
 
         try {
             var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
                 .uri(URI.create("https://api.mclo.gs/1/log"))
-                .POST(HttpRequest.BodyPublishers.ofString("content=" + URLEncoder.encode(crash.getDetails(), StandardCharsets.UTF_8.toString())))
+                .POST(HttpRequest.BodyPublishers.ofString("content=" + URLEncoder.encode(crash.getDetails(), StandardCharsets.UTF_8)))
                 .header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
                 .build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
