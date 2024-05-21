@@ -26,7 +26,7 @@ public class CrashHandler {
         public void crash(Runnable onCrash) {
             if (!value) {
                 value = true;
-                Discord.send(Config.INSTANCE.game.serverCrashMessage);
+                Discord.send(Config.INSTANCE.game().serverCrashMessage());
                 onCrash.run();
             }
         }
@@ -50,7 +50,7 @@ public class CrashHandler {
         if (crashMessage != null) Discord.send(crashMessage);
     }
 
-    private static record LogUploadResponse(@Expose String url) { }
+    private record LogUploadResponse(@Expose String url) { }
 
     public interface CrashValue {
         boolean get();

@@ -5,8 +5,6 @@ import java.net.http.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 
@@ -27,8 +25,6 @@ import one.devos.nautical.teabridge.util.StyledChatCompat;
 public class TeaBridge {
     public static final Logger LOGGER = LoggerFactory.getLogger("TeaBridge");
 
-    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().setLenient().create();
-
     public static final HttpClient CLIENT = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
 
     public static void initialize() {
@@ -43,17 +39,17 @@ public class TeaBridge {
     }
 
     public static void onServerStarting(MinecraftServer server) {
-        if (Config.INSTANCE.debug) TeaBridge.LOGGER.warn("DEBUG MODE IS ENABLED, THIS WILL LOG EVERYTHING WILL CAUSE LAG SPIKES!!!!!!");
-        Discord.send(Config.INSTANCE.game.serverStartingMessage);
+        if (Config.INSTANCE.debug()) TeaBridge.LOGGER.warn("DEBUG MODE IS ENABLED, THIS WILL LOG EVERYTHING WILL CAUSE LAG SPIKES!!!!!!");
+        Discord.send(Config.INSTANCE.game().serverStartingMessage());
     }
 
     public static void onServerStart(MinecraftServer server) {
         ChannelListener.INSTANCE.setServer(server);
-        Discord.send(Config.INSTANCE.game.serverStartMessage);
+        Discord.send(Config.INSTANCE.game().serverStartMessage());
     }
 
     public static void onServerStop(MinecraftServer server) {
-        if (!CrashHandler.CRASH_VALUE.get()) Discord.send(Config.INSTANCE.game.serverStopMessage);
+        if (!CrashHandler.CRASH_VALUE.get()) Discord.send(Config.INSTANCE.game().serverStopMessage());
         Discord.stop();
     }
 
@@ -66,7 +62,7 @@ public class TeaBridge {
     }
 
     public static void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
-        if (!Config.INSTANCE.game.mirrorCommandMessages) return;
+        if (!Config.INSTANCE.game().mirrorCommandMessages()) return;
         if (!source.isPlayer()) Discord.send(message.signedContent());
     }
 

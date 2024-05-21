@@ -16,7 +16,7 @@ public abstract class CrashReportMixin {
     @Inject(method = "saveToFile", at = @At("HEAD"))
     private void teabridge$uploadCrash(File file, CallbackInfoReturnable<Boolean> cir) {
         CrashHandler.CRASH_VALUE.crash(() -> {
-            if (Config.INSTANCE.crashes.uploadToMclogs) CrashHandler.uploadAndSend((CrashReport) (Object) this);
+            if (Config.INSTANCE.crashes().uploadToMclogs()) CrashHandler.uploadAndSend((CrashReport) (Object) this);
         });
     }
 }

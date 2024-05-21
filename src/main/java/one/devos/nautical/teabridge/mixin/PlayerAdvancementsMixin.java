@@ -13,7 +13,7 @@ import one.devos.nautical.teabridge.discord.Discord;
 public abstract class PlayerAdvancementsMixin {
     @ModifyArg(method = "method_53637", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
     private Component teabridge$mirrorAwardMessage(Component awardMessage) {
-        if (Config.INSTANCE.game.mirrorAdvancements) Discord.send(awardMessage.getString());
+        if (Config.INSTANCE.game().mirrorAdvancements()) Discord.send(awardMessage.getString());
         return awardMessage;
     }
 }

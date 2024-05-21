@@ -18,7 +18,7 @@ class PKCompat {
     private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
     static void initIfEnabled() {
-        if (!(Config.INSTANCE.discord.pkMessageDelay > 0)) return;
+        if (!(Config.INSTANCE.discord().pkMessageDelay() > 0)) return;
         var thread = new Thread(() -> {
             while (true) {
                 while (scheduledMessages.peek() == null) {}
@@ -34,12 +34,12 @@ class PKCompat {
     }
 
     static void await(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler) {
-        if (Config.INSTANCE.discord.pkMessageDelay > 0) {
+        if (Config.INSTANCE.discord().pkMessageDelay() > 0) {
             scheduledMessages.add(new ScheduledMessage(
                 event,
                 handler,
-                Config.INSTANCE.discord.pkMessageDelayMilliseconds ?
-                    Instant.now().plusMillis(Config.INSTANCE.discord.pkMessageDelay) : Instant.now().plusSeconds(Config.INSTANCE.discord.pkMessageDelay)
+                Config.INSTANCE.discord().pkMessageDelayMilliseconds() ?
+                    Instant.now().plusMillis(Config.INSTANCE.discord().pkMessageDelay()) : Instant.now().plusSeconds(Config.INSTANCE.discord().pkMessageDelay())
             ));
             return;
         }

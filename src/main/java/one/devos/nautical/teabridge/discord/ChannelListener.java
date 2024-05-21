@@ -32,7 +32,7 @@ public class ChannelListener extends ListenerAdapter {
             if (
                 !event.isFromGuild() ||
                 event.getChannel().getIdLong() != channel ||
-                event.getAuthor().getIdLong() == Discord.selfId ||
+                event.getAuthor().getIdLong() == Discord.selfMember.get().getUser().getIdLong() ||
                 (event.isWebhookMessage() && !proxied) ||
                 (!event.isWebhookMessage() && proxied)
             ) return;

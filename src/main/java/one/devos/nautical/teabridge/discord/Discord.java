@@ -3,76 +3,72 @@ package one.devos.nautical.teabridge.discord;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
-
+import com.google.common.base.Suppliers;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import one.devos.nautical.teabridge.TeaBridge;
-import one.devos.nautical.teabridge.util.JsonUtils;
 import one.devos.nautical.teabridge.Config;
+import org.jetbrains.annotations.Nullable;
 
 public class Discord {
-    private static JDA jda;
-    private static long guildId;
-    public static long selfId;
-
-    private static Member cachedSelfMember;
-    private static Supplier<Member> cachingSelfMemberGet = () -> {
-        if (cachedSelfMember == null) {
-            var guild = jda.getGuildById(guildId);
-            if (guild != null) {
-                cachedSelfMember = guild.getSelfMember();
-            } else {
-                throw new RuntimeException("Guild is null. This most likely means you are missing the message content intent, please enable it within the app's settings in the discord developer portal.");
-            }
-        }
-        return cachedSelfMember;
-    };
+    static JDA jda;
+    static Supplier<Member> selfMember;
 
     public static final ProtoWebHook WEB_HOOK = new ProtoWebHook(
-        () -> cachingSelfMemberGet.get().getEffectiveName(),
-        () -> cachingSelfMemberGet.get().getEffectiveAvatarUrl()
+        () -> selfMember.get().getEffectiveName(),
+        () -> selfMember.get().getEffectiveAvatarUrl()
     );
 
     private static Thread messageThread;
     private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
     public static void start() {
-        if (Config.INSTANCE.discord.token.isEmpty()) {
+        if (Config.INSTANCE.discord().token().isEmpty()) {
             TeaBridge.LOGGER.error("Unable to load, no Discord token is specified!");
             return;
         }
 
-        if (Config.INSTANCE.discord.webhook.isEmpty()) {
+        if (Config.INSTANCE.discord().webhook().isEmpty()) {
             TeaBridge.LOGGER.error("Unable to load, no Discord webhook is specified!");
             return;
         }
 
         try {
             // Get required data from webhook
-            var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
-                .uri(URI.create(Config.INSTANCE.discord.webhook))
+            HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
+                .uri(URI.create(Config.INSTANCE.discord().webhook()))
                 .GET()
                 .build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
-            var webHookDataResponse = JsonUtils.GSON.fromJson(response.body(), WebHookDataResponse.class);
-            if (Config.INSTANCE.debug) TeaBridge.LOGGER.warn("Webhook response : " + response.body());
-            guildId = Long.parseLong(webHookDataResponse.guildId);
-            ChannelListener.INSTANCE.setChannel(Long.parseLong(webHookDataResponse.channelId));
+            WebHookData webHookData = WebHookData.fromJson(JsonParser.parseString(response.body())).getOrThrow();
+            if (Config.INSTANCE.debug()) TeaBridge.LOGGER.warn("Webhook response : " + response.body());
+            ChannelListener.INSTANCE.setChannel(webHookData.channelId);
 
-            jda = JDABuilder.createDefault(Config.INSTANCE.discord.token)
+            jda = JDABuilder.createDefault(Config.INSTANCE.discord().token())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .addEventListeners(ChannelListener.INSTANCE, CommandUtils.INSTANCE)
                 .build();
 
-            selfId = jda.getSelfUser().getIdLong();
+            selfMember = Suppliers.memoize(() -> {
+                Guild guild = jda.getGuildById(webHookData.guildId);
+                if (guild != null) {
+                    return guild.getSelfMember();
+                } else {
+                    throw new RuntimeException("Guild is null. This most likely means you are missing the message content intent, please enable it within the app's settings in the discord developer portal.");
+                }
+            });
         } catch (Exception e) {
             TeaBridge.LOGGER.error("Exception initializing JDA", e);
             return;
@@ -92,32 +88,29 @@ public class Discord {
     }
 
     public static void send(String message) {
-        send(WEB_HOOK, message, Optional.empty());
+        send(WEB_HOOK, message, null);
     }
 
-    public static void send(ProtoWebHook webHook, String message, Optional<String> displayName) {
+    public static void send(ProtoWebHook webHook, String message, @Nullable String displayName) {
         scheduledMessages.add(new ScheduledMessage(webHook, message, displayName));
     }
 
-    public static boolean scheduledSend(ScheduledMessage scheduledMessage) {
-        var webHook = scheduledMessage.webHook;
-        var message = scheduledMessage.message;
-        var displayName = scheduledMessage.displayName;
+    private static void scheduledSend(ScheduledMessage scheduledMessage) {
+        ProtoWebHook webHook = scheduledMessage.webHook;
+        String message = scheduledMessage.message;
+        String displayName = scheduledMessage.displayName;
         if (jda != null) {
             try {
-                if (Config.INSTANCE.debug) TeaBridge.LOGGER.warn("Sent webhook message json : " + webHook.jsonWithContent(message, displayName));
-                var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
-                    .uri(URI.create(Config.INSTANCE.discord.webhook))
-                    .POST(HttpRequest.BodyPublishers.ofString(webHook.jsonWithContent(message, displayName)))
+                HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
+                    .uri(URI.create(Config.INSTANCE.discord().webhook()))
+                    .POST(HttpRequest.BodyPublishers.ofString(webHook.createMessage(message, displayName).toJson().getOrThrow()))
                     .header("Content-Type", "application/json; charset=utf-8")
                     .build(), HttpResponse.BodyHandlers.ofString());
-                if (Config.INSTANCE.debug) TeaBridge.LOGGER.warn("Webhook message response : " + response.body());
                 if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
             } catch (Exception e) {
                 TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
             }
         }
-        return true;
     }
 
     public static void stop() {
@@ -127,7 +120,16 @@ public class Discord {
         }
     }
 
-    private static record WebHookDataResponse(@Expose @SerializedName("guild_id") String guildId, @Expose @SerializedName("channel_id") String channelId) { }
+    private record WebHookData(long guildId, long channelId) {
+        public static final Codec<WebHookData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.STRING.fieldOf("guild_id").xmap(Long::parseLong, String::valueOf).forGetter(WebHookData::guildId),
+                Codec.STRING.fieldOf("channel_id").xmap(Long::parseLong, String::valueOf).forGetter(WebHookData::channelId)
+        ).apply(instance, WebHookData::new));
 
-    public static record ScheduledMessage(ProtoWebHook webHook, String message, Optional<String> displayName) { }
+        public static DataResult<WebHookData> fromJson(JsonElement json) {
+            return CODEC.parse(JsonOps.INSTANCE, json);
+        }
+    }
+
+    private record ScheduledMessage(ProtoWebHook webHook, String message, @Nullable String displayName) { }
 }
