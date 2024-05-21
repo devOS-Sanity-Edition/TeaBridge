@@ -1,7 +1,10 @@
 package one.devos.nautical.teabridge;
 
 import java.net.http.HttpClient;
+import java.nio.file.Path;
 
+import com.mojang.serialization.DataResult;
+import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,31 +28,34 @@ import one.devos.nautical.teabridge.util.StyledChatCompat;
 public class TeaBridge {
     public static final Logger LOGGER = LoggerFactory.getLogger("TeaBridge");
 
-    public static final HttpClient CLIENT = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
+    public static final HttpClient CLIENT = HttpClient.newBuilder().build();
+
+    public static final String MOD_ID = "teabridge";
+    public static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID + ".json");
+
+    public static Config config = Config.DEFAULT;
 
     public static void initialize() {
-        try {
-            Config.load();
-        } catch (Exception e) {
-            LOGGER.warn("Failed to load config using defaults : ", e);
-        }
+        Config.load(CONFIG_PATH)
+                .ifError(e -> LOGGER.error("Failed to load config using defaults : {}", e))
+                .ifSuccess(loaded -> config = loaded);
         Discord.start();
 
         PlatformUtil.registerCommand(TeaBridge::registerCommands);
     }
 
     public static void onServerStarting(MinecraftServer server) {
-        if (Config.INSTANCE.debug()) TeaBridge.LOGGER.warn("DEBUG MODE IS ENABLED, THIS WILL LOG EVERYTHING WILL CAUSE LAG SPIKES!!!!!!");
-        Discord.send(Config.INSTANCE.game().serverStartingMessage());
+        if (TeaBridge.config.debug()) TeaBridge.LOGGER.warn("DEBUG MODE IS ENABLED, THIS WILL LOG EVERYTHING WILL CAUSE LAG SPIKES!!!!!!");
+        Discord.send(TeaBridge.config.game().serverStartingMessage());
     }
 
     public static void onServerStart(MinecraftServer server) {
         ChannelListener.INSTANCE.setServer(server);
-        Discord.send(Config.INSTANCE.game().serverStartMessage());
+        Discord.send(TeaBridge.config.game().serverStartMessage());
     }
 
     public static void onServerStop(MinecraftServer server) {
-        if (!CrashHandler.CRASH_VALUE.get()) Discord.send(Config.INSTANCE.game().serverStopMessage());
+        if (!CrashHandler.CRASH_VALUE.get()) Discord.send(TeaBridge.config.game().serverStopMessage());
         Discord.stop();
     }
 
@@ -62,23 +68,37 @@ public class TeaBridge {
     }
 
     public static void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
-        if (!Config.INSTANCE.game().mirrorCommandMessages()) return;
+        if (!TeaBridge.config.game().mirrorCommandMessages()) return;
         if (!source.isPlayer()) Discord.send(message.signedContent());
     }
 
     private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("teabridge").then(
-            Commands.literal("reloadConfig").executes(command -> {
-                try {
-                    Config.load();
-                    command.getSource().sendSuccess(() -> Component.literal("Config reloaded!").withStyle(ChatFormatting.GREEN), false);
-                } catch (Exception e) {
-                    command.getSource().sendFailure(Component.literal("Failed to reload config!").withStyle(ChatFormatting.RED));
-                    LOGGER.warn("Failed to reload config : ", e);
-                }
-
-                return Command.SINGLE_SUCCESS;
-            })
-        ));
+        dispatcher.register(Commands.literal("teabridge")
+                .requires(source -> source.hasPermission(2))
+                .then(
+                        Commands.literal("reloadConfig")
+                                .executes(command -> {
+                                    CommandSourceStack source = command.getSource();
+                                    DataResult<Config> loadResult = Config.load(CONFIG_PATH);
+                                    loadResult
+                                            .ifError(e -> {
+                                                source.sendFailure(
+                                                        Component.literal("Failed to reload config! check log for details")
+                                                                .withStyle(ChatFormatting.RED)
+                                                );
+                                                LOGGER.warn("Failed to reload config : {}", e);
+                                            })
+                                            .ifSuccess(loaded -> {
+                                                config = loaded;
+                                                source.sendSuccess(
+                                                        () -> Component.literal("Config reloaded!")
+                                                                .withStyle(ChatFormatting.GREEN),
+                                                        false
+                                                );
+                                            });
+                                    return loadResult.isSuccess() ? Command.SINGLE_SUCCESS : 0;
+                                })
+                )
+        );
     }
 }

@@ -1,5 +1,6 @@
 package one.devos.nautical.teabridge.mixin;
 
+import one.devos.nautical.teabridge.TeaBridge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -10,7 +11,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import one.devos.nautical.teabridge.Config;
 import one.devos.nautical.teabridge.discord.Discord;
 import one.devos.nautical.teabridge.duck.PlayerWebHook;
 
@@ -27,7 +27,7 @@ public abstract class ServerGamePacketListenerImplMixin {
     @ModifyArg(method = "removePlayerFromWorld", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
     private Component mirrorLeaveMessage(Component leaveMessage) {
         PlayerWebHook.ONLINE.remove((PlayerWebHook) player);
-        if (Config.INSTANCE.game().mirrorLeave()) Discord.send(leaveMessage.getString());
+        if (TeaBridge.config.game().mirrorLeave()) Discord.send(leaveMessage.getString());
         return leaveMessage;
     }
 }

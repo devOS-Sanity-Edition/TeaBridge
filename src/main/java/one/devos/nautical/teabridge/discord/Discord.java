@@ -19,7 +19,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import one.devos.nautical.teabridge.TeaBridge;
-import one.devos.nautical.teabridge.Config;
+import one.devos.nautical.teabridge.util.MoreCodecs;
 import org.jetbrains.annotations.Nullable;
 
 public class Discord {
@@ -28,34 +28,33 @@ public class Discord {
 
     public static final ProtoWebHook WEB_HOOK = new ProtoWebHook(
         () -> selfMember.get().getEffectiveName(),
-        () -> selfMember.get().getEffectiveAvatarUrl()
+        () -> URI.create(selfMember.get().getEffectiveAvatarUrl())
     );
 
     private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
     public static void start() {
-        if (Config.INSTANCE.discord().token().isEmpty()) {
+        if (TeaBridge.config.discord().token().isEmpty()) {
             TeaBridge.LOGGER.error("Unable to load, no Discord token is specified!");
             return;
         }
 
-        if (Config.INSTANCE.discord().webhook().isEmpty()) {
+        if (TeaBridge.config.discord().webhook().toString().isEmpty()) {
             TeaBridge.LOGGER.error("Unable to load, no Discord webhook is specified!");
             return;
         }
 
         try {
             // Get required data from webhook
-            HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
-                .uri(URI.create(Config.INSTANCE.discord().webhook()))
+            HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(TeaBridge.config.discord().webhook())
                 .GET()
                 .build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
             WebHookData webHookData = WebHookData.fromJson(JsonParser.parseString(response.body())).getOrThrow();
-            if (Config.INSTANCE.debug()) TeaBridge.LOGGER.warn("Webhook response : " + response.body());
+            if (TeaBridge.config.debug()) TeaBridge.LOGGER.warn("Webhook response : " + response.body());
             ChannelListener.INSTANCE.setChannel(webHookData.channelId);
 
-            jda = JDABuilder.createDefault(Config.INSTANCE.discord().token())
+            jda = JDABuilder.createDefault(TeaBridge.config.discord().token())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .addEventListeners(ChannelListener.INSTANCE, CommandUtils.INSTANCE)
                 .build();
@@ -100,8 +99,7 @@ public class Discord {
         String displayName = scheduledMessage.displayName;
         if (jda != null) {
             try {
-                HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
-                    .uri(URI.create(Config.INSTANCE.discord().webhook()))
+                HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(TeaBridge.config.discord().webhook())
                     .POST(HttpRequest.BodyPublishers.ofString(webHook.createMessage(message, displayName).toJson().getOrThrow()))
                     .header("Content-Type", "application/json; charset=utf-8")
                     .build(), HttpResponse.BodyHandlers.ofString());
@@ -121,8 +119,8 @@ public class Discord {
 
     private record WebHookData(long guildId, long channelId) {
         public static final Codec<WebHookData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Codec.STRING.fieldOf("guild_id").xmap(Long::parseLong, String::valueOf).forGetter(WebHookData::guildId),
-                Codec.STRING.fieldOf("channel_id").xmap(Long::parseLong, String::valueOf).forGetter(WebHookData::channelId)
+                MoreCodecs.fromString(Long::parseUnsignedLong).fieldOf("guild_id").forGetter(WebHookData::guildId),
+                MoreCodecs.fromString(Long::parseUnsignedLong).fieldOf("channel_id").forGetter(WebHookData::channelId)
         ).apply(instance, WebHookData::new));
 
         public static DataResult<WebHookData> fromJson(JsonElement json) {

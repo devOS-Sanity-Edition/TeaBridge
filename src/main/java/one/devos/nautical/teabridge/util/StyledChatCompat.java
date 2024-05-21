@@ -25,8 +25,8 @@ public class StyledChatCompat {
     public static Pair<String, @Nullable String> modify(PlayerChatMessage message) {
         if (USE_COMPAT) {
             try {
-                var proxyContent = ((Component) METHOD.invoke(message, "proxy_content")).getString();
-                var proxyDisplayName = ((Component) METHOD.invoke(message, "proxy_display_name")).getString();
+                String proxyContent = ((Component) METHOD.invoke(message, "proxy_content")).getString();
+                String proxyDisplayName = ((Component) METHOD.invoke(message, "proxy_display_name")).getString();
                 if (!proxyContent.isBlank() || !proxyDisplayName.isBlank())
                     return Pair.of(proxyContent, proxyDisplayName);
             } catch (Throwable e) {

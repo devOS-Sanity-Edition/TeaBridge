@@ -13,10 +13,10 @@ import org.jetbrains.annotations.Nullable;
 public interface PlayerWebHook {
     List<PlayerWebHook> ONLINE = Lists.newArrayList();
 
-    ProtoWebHook getWebHook();
+    ProtoWebHook proto();
 
     default void send(String message, @Nullable String displayName) {
-        Discord.send(getWebHook(), message, displayName);
+        Discord.send(proto(), message, displayName);
     }
 
     default void send(PlayerChatMessage message) {

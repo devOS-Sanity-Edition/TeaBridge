@@ -1,15 +1,24 @@
 package one.devos.nautical.teabridge;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.function.Function;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import one.devos.nautical.teabridge.util.MoreCodecs;
 
 public record Config(
         Discord discord,
@@ -21,45 +30,61 @@ public record Config(
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().disableHtmlEscaping().create();
 
     public static final Codec<Config> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Discord.CODEC.optionalFieldOf("discord", Discord.DEFAULT).forGetter(Config::discord),
-            Avatars.CODEC.optionalFieldOf("avatars", Avatars.DEFAULT).forGetter(Config::avatars),
-            Game.CODEC.optionalFieldOf("game", Game.DEFAULT).forGetter(Config::game),
-            Crashes.CODEC.optionalFieldOf("crashes", Crashes.DEFAULT).forGetter(Config::crashes),
+            Discord.CODEC.fieldOf("discord").forGetter(Config::discord),
+            Avatars.CODEC.fieldOf("avatars").forGetter(Config::avatars),
+            Game.CODEC.fieldOf("game").forGetter(Config::game),
+            Crashes.CODEC.fieldOf("crashes").forGetter(Config::crashes),
             Codec.BOOL.optionalFieldOf("debug", false).forGetter(Config::debug)
     ).apply(instance, Config::new));
 
-    public static Config INSTANCE = new Config(Discord.DEFAULT, Avatars.DEFAULT, Game.DEFAULT, Crashes.DEFAULT, false);
+    public static final Config DEFAULT = new Config(Discord.DEFAULT, Avatars.DEFAULT, Game.DEFAULT, Crashes.DEFAULT, false);
 
-    public static void load() throws Exception {
-        Path configPath = PlatformUtil.getConfigDir().resolve("teabridge.json");
-        if (Files.exists(configPath))
-            INSTANCE = CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(Files.newBufferedReader(configPath))).getOrThrow();
-        Files.writeString(configPath, GSON.toJson(CODEC.encodeStart(JsonOps.INSTANCE, INSTANCE).getOrThrow()), StandardCharsets.UTF_8);
+    public static DataResult<Config> load(Path path) {
+        try {
+            if (Files.exists(path)) {
+                try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+                    return CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader));
+                }
+            } else {
+                try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
+                    GSON.toJson(CODEC.encodeStart(JsonOps.INSTANCE, DEFAULT).getOrThrow(), writer);
+                    return DataResult.success(DEFAULT);
+                }
+            }
+        } catch (Exception e) {
+            return DataResult.error(e::getMessage);
+        }
     }
 
-    public record Discord(String token, String webhook, int pkMessageDelay, boolean pkMessageDelayMilliseconds) {
+    public record Discord(String token, URI webhook, int pkMessageDelay, boolean pkMessageDelayMilliseconds) {
         public static final String DEFAULT_TOKEN = "";
-        public static final String DEFAULT_WEBHOOK = "";
+        public static final URI DEFAULT_WEBHOOK = URI.create("");
         public static final int PK_MESSAGE_DELAY = 0;
         public static final boolean PK_MESSAGE_DELAY_MILLISECONDS = true;
 
         public static final Codec<Discord> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Codec.STRING.optionalFieldOf("token", DEFAULT_TOKEN).forGetter(Discord::token),
-                Codec.STRING.optionalFieldOf("webhook", DEFAULT_WEBHOOK).forGetter(Discord::webhook),
-                Codec.INT.optionalFieldOf("pkMessageDelay", PK_MESSAGE_DELAY).forGetter(Discord::pkMessageDelay),
-                Codec.BOOL.optionalFieldOf("pkMessageDelayMilliseconds", PK_MESSAGE_DELAY_MILLISECONDS).forGetter(Discord::pkMessageDelayMilliseconds)
+                Codec.STRING.fieldOf("token").forGetter(Discord::token),
+                MoreCodecs.URI.fieldOf("webhook").forGetter(Discord::webhook),
+                Codec.INT.fieldOf("pkMessageDelay").forGetter(Discord::pkMessageDelay),
+                Codec.BOOL.fieldOf("pkMessageDelayMilliseconds").forGetter(Discord::pkMessageDelayMilliseconds)
         ).apply(instance, Discord::new));
 
         public static final Discord DEFAULT = new Discord(DEFAULT_TOKEN, DEFAULT_WEBHOOK, PK_MESSAGE_DELAY, PK_MESSAGE_DELAY_MILLISECONDS);
     }
 
-    public record Avatars(String avatarUrl, boolean useTextureId) {
-        public static final String DEFAULT_AVATAR_URL = "https://api.nucleoid.xyz/skin/face/256/%s";
+    public record Avatars(Function<String, URI> avatarUrl, boolean useTextureId) {
+        public static final Function<String, URI> DEFAULT_AVATAR_URL = a -> URI.create("https://api.nucleoid.xyz/skin/face/256/%s".formatted(a));
         public static final boolean DEFAULT_USE_TEXTURE_ID = false;
 
         public static final Codec<Avatars> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Codec.STRING.optionalFieldOf("avatarUrl", DEFAULT_AVATAR_URL).forGetter(Avatars::avatarUrl),
-                Codec.BOOL.optionalFieldOf("useTextureId", DEFAULT_USE_TEXTURE_ID).forGetter(Avatars::useTextureId)
+                Codec.STRING
+                        .comapFlatMap(
+                                MoreCodecs.checkedMapper(a -> (Function<String, URI>) b -> URI.create(a.formatted(b))),
+                                b -> URLDecoder.decode(b.apply(URLEncoder.encode("%s", StandardCharsets.UTF_8)).toString(), StandardCharsets.UTF_8)
+                        )
+                        .fieldOf("avatarUrl")
+                        .forGetter(Avatars::avatarUrl),
+                Codec.BOOL.fieldOf("useTextureId").forGetter(Avatars::useTextureId)
         ).apply(instance, Avatars::new));
 
         public static final Avatars DEFAULT = new Avatars(DEFAULT_AVATAR_URL, DEFAULT_USE_TEXTURE_ID);
@@ -87,15 +112,15 @@ public record Config(
         public static final boolean DEFAULT_MIRROR_COMMAND_MESSAGES = true;
 
         public static final Codec<Game> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Codec.STRING.optionalFieldOf("serverStartingMessage", DEFAULT_SERVER_STARTING_MESSAGE).forGetter(Game::serverStartingMessage),
-                Codec.STRING.optionalFieldOf("serverStartMessage", DEFAULT_SERVER_START_MESSAGE).forGetter(Game::serverStartMessage),
-                Codec.STRING.optionalFieldOf("serverStopMessage", DEFAULT_SERVER_STOP_MESSAGE).forGetter(Game::serverStopMessage),
-                Codec.STRING.optionalFieldOf("serverCrashMessage", DEFAULT_SERVER_CRASH_MESSAGE).forGetter(Game::serverCrashMessage),
-                Codec.BOOL.optionalFieldOf("mirrorJoin", true).forGetter(Game::mirrorJoin),
-                Codec.BOOL.optionalFieldOf("mirrorLeave", true).forGetter(Game::mirrorLeave),
-                Codec.BOOL.optionalFieldOf("mirrorDeath", true).forGetter(Game::mirrorDeath),
-                Codec.BOOL.optionalFieldOf("mirrorAdvancements", true).forGetter(Game::mirrorAdvancements),
-                Codec.BOOL.optionalFieldOf("mirrorCommandMessages", true).forGetter(Game::mirrorCommandMessages)
+                Codec.STRING.fieldOf("serverStartingMessage").forGetter(Game::serverStartingMessage),
+                Codec.STRING.fieldOf("serverStartMessage").forGetter(Game::serverStartMessage),
+                Codec.STRING.fieldOf("serverStopMessage").forGetter(Game::serverStopMessage),
+                Codec.STRING.fieldOf("serverCrashMessage").forGetter(Game::serverCrashMessage),
+                Codec.BOOL.fieldOf("mirrorJoin").forGetter(Game::mirrorJoin),
+                Codec.BOOL.fieldOf("mirrorLeave").forGetter(Game::mirrorLeave),
+                Codec.BOOL.fieldOf("mirrorDeath").forGetter(Game::mirrorDeath),
+                Codec.BOOL.fieldOf("mirrorAdvancements").forGetter(Game::mirrorAdvancements),
+                Codec.BOOL.fieldOf("mirrorCommandMessages").forGetter(Game::mirrorCommandMessages)
         ).apply(instance, Game::new));
 
         public static final Game DEFAULT = new Game(
@@ -115,7 +140,7 @@ public record Config(
         public static final boolean DEFAULT_UPLOAD_TO_MCLOGS = true;
 
         public static final Codec<Crashes> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Codec.BOOL.optionalFieldOf("uploadToMclogs", DEFAULT_UPLOAD_TO_MCLOGS).forGetter(Crashes::uploadToMclogs)
+                Codec.BOOL.fieldOf("uploadToMclogs").forGetter(Crashes::uploadToMclogs)
         ).apply(instance, Crashes::new));
 
         public static final Crashes DEFAULT = new Crashes(DEFAULT_UPLOAD_TO_MCLOGS);

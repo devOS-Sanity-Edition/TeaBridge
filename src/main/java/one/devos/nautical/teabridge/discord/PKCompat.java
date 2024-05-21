@@ -8,7 +8,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiConsumer;
 
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import one.devos.nautical.teabridge.Config;
 import one.devos.nautical.teabridge.TeaBridge;
 
 
@@ -18,7 +17,7 @@ class PKCompat {
     private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
     static void initIfEnabled() {
-        if (!(Config.INSTANCE.discord().pkMessageDelay() > 0)) return;
+        if (!(TeaBridge.config.discord().pkMessageDelay() > 0)) return;
         var thread = new Thread(() -> {
             while (true) {
                 while (scheduledMessages.peek() == null) {}
@@ -34,12 +33,12 @@ class PKCompat {
     }
 
     static void await(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler) {
-        if (Config.INSTANCE.discord().pkMessageDelay() > 0) {
+        if (TeaBridge.config.discord().pkMessageDelay() > 0) {
             scheduledMessages.add(new ScheduledMessage(
                 event,
                 handler,
-                Config.INSTANCE.discord().pkMessageDelayMilliseconds() ?
-                    Instant.now().plusMillis(Config.INSTANCE.discord().pkMessageDelay()) : Instant.now().plusSeconds(Config.INSTANCE.discord().pkMessageDelay())
+                TeaBridge.config.discord().pkMessageDelayMilliseconds() ?
+                    Instant.now().plusMillis(TeaBridge.config.discord().pkMessageDelay()) : Instant.now().plusSeconds(TeaBridge.config.discord().pkMessageDelay())
             ));
             return;
         }
