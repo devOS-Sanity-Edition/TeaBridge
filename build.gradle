@@ -37,7 +37,7 @@ dependencies {
 	include("com.fasterxml.jackson.core:jackson-databind:2.17.0")
 	include("com.fasterxml.jackson.core:jackson-annotations:2.17.0")
 	include("com.squareup.okhttp3:okhttp:4.12.0")
-	include("com.squareup.okio:okio-jvm:3.2.0")
+	include('com.squareup.okio:okio-jvm:3.4.0')
 	include("com.neovisionaries:nv-websocket-client:2.14")
 	// for "squareup" libs (they all use kotlin)
 	modLocalRuntime("net.fabricmc:fabric-language-kotlin:1.10.20+kotlin.1.9.24")
