@@ -41,28 +41,29 @@ public class TeaBridge implements DedicatedServerModInitializer {
 
     public static Config config = Config.DEFAULT;
 
+    @Override
     public void onInitializeServer() {
         ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
         ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStart);
         ServerLifecycleEvents.SERVER_STOPPED.register(this::onServerStop);
 
-        ResourceLocation phaseId = new ResourceLocation(MOD_ID, "mirror");
-        ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(new ResourceLocation("switchy_proxy", "set_args"), phaseId);
-        ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(phaseId, new ResourceLocation("switchy_proxy", "clear"));
+        ResourceLocation phaseId = ResourceLocation.fromNamespaceAndPath(MOD_ID, "mirror");
+        ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(ResourceLocation.fromNamespaceAndPath("switchy_proxy", "set_args"), phaseId);
+        ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(phaseId, ResourceLocation.fromNamespaceAndPath("switchy_proxy", "clear"));
         ServerMessageEvents.CHAT_MESSAGE.register(phaseId, this::onChatMessage);
 
         ServerMessageEvents.COMMAND_MESSAGE.register(this::onCommandMessage);
 
         CommandRegistrationCallback.EVENT.register(this::registerCommands);
 
-        Config.load(CONFIG_PATH)
+        Config.loadOrCreate(CONFIG_PATH)
                 .ifError(e -> LOGGER.error("Failed to load config using defaults : {}", e))
                 .ifSuccess(loaded -> config = loaded);
         Discord.start();
     }
 
     private void onServerStarting(MinecraftServer server) {
-        if (TeaBridge.config.debug()) TeaBridge.LOGGER.warn("DEBUG MODE IS ENABLED, THIS WILL LOG EVERYTHING WILL CAUSE LAG SPIKES!!!!!!");
+        if (TeaBridge.config.debug()) TeaBridge.LOGGER.warn("!!Debug mode enabled in config!!");
         Discord.send(TeaBridge.config.game().serverStartingMessage());
     }
 
@@ -72,7 +73,7 @@ public class TeaBridge implements DedicatedServerModInitializer {
     }
 
     private void onServerStop(MinecraftServer server) {
-        if (!CrashHandler.CRASH_VALUE.get()) Discord.send(TeaBridge.config.game().serverStopMessage());
+        if (!CrashHandler.didCrash) Discord.send(TeaBridge.config.game().serverStopMessage());
         Discord.stop();
     }
 
@@ -96,7 +97,7 @@ public class TeaBridge implements DedicatedServerModInitializer {
                         Commands.literal("reloadConfig")
                                 .executes(command -> {
                                     CommandSourceStack source = command.getSource();
-                                    DataResult<Config> loadResult = Config.load(CONFIG_PATH);
+                                    DataResult<Config> loadResult = Config.loadOrCreate(CONFIG_PATH);
                                     loadResult
                                             .ifError(e -> {
                                                 source.sendFailure(

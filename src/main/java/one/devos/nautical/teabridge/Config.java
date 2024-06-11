@@ -39,7 +39,7 @@ public record Config(
 
     public static final Config DEFAULT = new Config(Discord.DEFAULT, Avatars.DEFAULT, Game.DEFAULT, Crashes.DEFAULT, false);
 
-    public static DataResult<Config> load(Path path) {
+    public static DataResult<Config> loadOrCreate(Path path) {
         try {
             if (Files.exists(path)) {
                 try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {

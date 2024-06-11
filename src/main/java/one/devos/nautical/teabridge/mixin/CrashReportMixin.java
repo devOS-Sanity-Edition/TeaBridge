@@ -1,8 +1,9 @@
 package one.devos.nautical.teabridge.mixin;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
 
-import one.devos.nautical.teabridge.TeaBridge;
+import net.minecraft.ReportType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,10 +14,8 @@ import one.devos.nautical.teabridge.util.CrashHandler;
 
 @Mixin(CrashReport.class)
 public abstract class CrashReportMixin {
-    @Inject(method = "saveToFile", at = @At("HEAD"))
-    private void uploadCrash(File file, CallbackInfoReturnable<Boolean> cir) {
-        CrashHandler.CRASH_VALUE.crash(() -> {
-            if (TeaBridge.config.crashes().uploadToMclogs()) CrashHandler.uploadAndSend((CrashReport) (Object) this);
-        });
+    @Inject(method = "saveToFile(Ljava/nio/file/Path;Lnet/minecraft/ReportType;Ljava/util/List;)Z", at = @At("HEAD"))
+    private void handleCrash(Path path, ReportType reportType, List<String> list, CallbackInfoReturnable<Boolean> cir) {
+        CrashHandler.handle((CrashReport) (Object) this);
     }
 }
