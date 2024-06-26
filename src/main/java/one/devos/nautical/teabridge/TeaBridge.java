@@ -58,8 +58,14 @@ public class TeaBridge implements DedicatedServerModInitializer {
 
         Config.loadOrCreate(CONFIG_PATH)
                 .ifError(e -> LOGGER.error("Failed to load config using defaults : {}", e))
-                .ifSuccess(loaded -> config = loaded);
-        Discord.start();
+                .ifSuccess(loaded -> {
+                    config = loaded;
+                    this.onConfigLoad();
+                });
+    }
+
+    private void onConfigLoad() {
+        Discord.onConfigLoad(config.discord());
     }
 
     private void onServerStarting(MinecraftServer server) {
@@ -108,6 +114,7 @@ public class TeaBridge implements DedicatedServerModInitializer {
                                             })
                                             .ifSuccess(loaded -> {
                                                 config = loaded;
+                                                this.onConfigLoad();
                                                 source.sendSuccess(
                                                         () -> Component.literal("Config reloaded!")
                                                                 .withStyle(ChatFormatting.GREEN),

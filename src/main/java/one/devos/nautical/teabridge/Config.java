@@ -56,11 +56,16 @@ public record Config(
         }
     }
 
-    public record Discord(String token, URI webhook, int pkMessageDelay, boolean pkMessageDelayMilliseconds) {
+    public record Discord(
+            String token,
+            URI webhook,
+            int pkMessageDelay,
+            boolean pkMessageDelayMilliseconds
+    ) {
         public static final String DEFAULT_TOKEN = "";
         public static final URI DEFAULT_WEBHOOK = URI.create("");
-        public static final int PK_MESSAGE_DELAY = 0;
-        public static final boolean PK_MESSAGE_DELAY_MILLISECONDS = true;
+        public static final int DEFAULT_PK_MESSAGE_DELAY = 0;
+        public static final boolean DEFAULT_PK_MESSAGE_DELAY_MILLISECONDS = true;
 
         public static final Codec<Discord> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("token").forGetter(Discord::token),
@@ -69,7 +74,12 @@ public record Config(
                 Codec.BOOL.fieldOf("pkMessageDelayMilliseconds").forGetter(Discord::pkMessageDelayMilliseconds)
         ).apply(instance, Discord::new));
 
-        public static final Discord DEFAULT = new Discord(DEFAULT_TOKEN, DEFAULT_WEBHOOK, PK_MESSAGE_DELAY, PK_MESSAGE_DELAY_MILLISECONDS);
+        public static final Discord DEFAULT = new Discord(
+                DEFAULT_TOKEN,
+                DEFAULT_WEBHOOK,
+                DEFAULT_PK_MESSAGE_DELAY,
+                DEFAULT_PK_MESSAGE_DELAY_MILLISECONDS
+        );
     }
 
     public record Avatars(Function<String, URI> avatarUrl, boolean useTextureId) {

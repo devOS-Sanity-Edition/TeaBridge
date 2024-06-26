@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import one.devos.nautical.teabridge.Config;
 import one.devos.nautical.teabridge.TeaBridge;
 import one.devos.nautical.teabridge.util.MoreCodecs;
 import org.jetbrains.annotations.Nullable;
@@ -33,31 +34,33 @@ public class Discord {
 
     private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
-    public static void start() {
-        if (TeaBridge.config.discord().token().isEmpty()) {
+    public static void onConfigLoad(Config.Discord config) {
+        stop();
+
+        if (config.token().isEmpty()) {
             TeaBridge.LOGGER.error("Unable to load, no Discord token is specified!");
             return;
         }
 
-        if (TeaBridge.config.discord().webhook().toString().isEmpty()) {
+        if (config.webhook().toString().isEmpty()) {
             TeaBridge.LOGGER.error("Unable to load, no Discord webhook is specified!");
             return;
         }
 
         try {
             // Get required data from webhook
-            HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(TeaBridge.config.discord().webhook())
+            HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(config.webhook())
                 .GET()
                 .build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) throw new Exception("Non-success status code from request " + response);
             WebHookData webHookData = WebHookData.fromJson(JsonParser.parseString(response.body())).getOrThrow();
-            if (TeaBridge.config.debug()) TeaBridge.LOGGER.warn("Webhook response : " + response.body());
+            if (TeaBridge.config.debug()) TeaBridge.LOGGER.warn("Webhook response : {}", response.body());
             ChannelListener.INSTANCE.setChannel(webHookData.channelId);
 
-            jda = JDABuilder.createDefault(TeaBridge.config.discord().token())
-                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
-                .addEventListeners(ChannelListener.INSTANCE)
-                .build();
+            jda = JDABuilder.createDefault(config.token())
+                    .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                    .addEventListeners(ChannelListener.INSTANCE)
+                    .build();
 
             selfMember = Suppliers.memoize(() -> {
                 Guild guild = jda.getGuildById(webHookData.guildId);
@@ -111,6 +114,7 @@ public class Discord {
     }
 
     public static void stop() {
+        scheduledMessages.clear();
         if (jda != null) {
             jda.shutdown();
             jda = null;

@@ -7,7 +7,7 @@ import java.net.URI;
 import java.util.function.Function;
 
 public class MoreCodecs {
-    public static final Codec<URI> URI = Codec.STRING.comapFlatMap(checkedMapper(java.net.URI::create), java.net.URI::toString);
+    public static final Codec<URI> URI = fromString(java.net.URI::new);
 
     public static <A, B> Function<A, DataResult<B>> checkedMapper(CheckedMappingFunction<A, B> mapper) {
         return mapper;

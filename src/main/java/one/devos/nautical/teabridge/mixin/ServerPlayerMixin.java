@@ -1,6 +1,12 @@
 package one.devos.nautical.teabridge.mixin;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
+import net.minecraft.Optionull;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import one.devos.nautical.teabridge.TeaBridge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -16,17 +22,20 @@ import one.devos.nautical.teabridge.duck.PlayerWebHook;
 import java.util.Objects;
 
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayerMixin implements PlayerWebHook {
+public abstract class ServerPlayerMixin extends Player implements PlayerWebHook {
+    private ServerPlayerMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
+        super(level, blockPos, f, gameProfile);
+    }
+
     @Unique
     private final ProtoWebHook webHook = new ProtoWebHook(
-        () -> Objects.requireNonNull(((ServerPlayer) (Object) this).getDisplayName()).getString(),
+        () -> MarkdownSanitizer.escape(Optionull.mapOrElse(this.getDisplayName(), Component::getString, () -> this.getName().getString())),
         () -> {
-            ServerPlayer self = (ServerPlayer) (Object) this;
             if (TeaBridge.config.avatars().useTextureId()) {
-                MinecraftProfileTexture skin = Objects.requireNonNull(self.getServer()).getSessionService().getTextures(self.getGameProfile()).skin();
+                MinecraftProfileTexture skin = Objects.requireNonNull(this.getServer()).getSessionService().getTextures(this.getGameProfile()).skin();
                 if (skin != null) return TeaBridge.config.avatars().avatarUrl().apply(skin.getHash());
             }
-            return TeaBridge.config.avatars().avatarUrl().apply(self.getStringUUID());
+            return TeaBridge.config.avatars().avatarUrl().apply(this.getStringUUID());
         }
     );
 
