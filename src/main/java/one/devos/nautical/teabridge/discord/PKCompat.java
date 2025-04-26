@@ -12,50 +12,53 @@ import one.devos.nautical.teabridge.TeaBridge;
 
 
 class PKCompat {
-    private static final String MESSAGE_ENDPOINT = "https://api.pluralkit.me/v2/messages/{id}";
+	private static final String MESSAGE_ENDPOINT = "https://api.pluralkit.me/v2/messages/{id}";
 
-    private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
+	private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
-    static void initIfEnabled() {
-        if (!(TeaBridge.config.discord().pkMessageDelay() > 0)) return;
-        var thread = new Thread(() -> {
-            while (true) {
-                while (scheduledMessages.peek() == null) {}
-                var message = scheduledMessages.peek();
-                if (Instant.now().compareTo(message.instant) >= 0) {
-                    message.handler.accept(message.event, isProxied(message.event.getMessageId()));
-                    scheduledMessages.remove();
-                }
-            }
-        }, "TeaBridge Chat Message Scheduler");
-        thread.setDaemon(true);
-        thread.start();
-    }
+	static void initIfEnabled() {
+		if (!(TeaBridge.config.discord().pkMessageDelay() > 0)) return;
+		var thread = new Thread(() -> {
+			while (true) {
+				while (scheduledMessages.peek() == null) {
+				}
+				var message = scheduledMessages.peek();
+				if (Instant.now().compareTo(message.instant) >= 0) {
+					message.handler.accept(message.event, isProxied(message.event.getMessageId()));
+					scheduledMessages.remove();
+				}
+			}
+		}, "TeaBridge Chat Message Scheduler");
+		thread.setDaemon(true);
+		thread.start();
+	}
 
-    static void await(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler) {
-        if (TeaBridge.config.discord().pkMessageDelay() > 0) {
-            scheduledMessages.add(new ScheduledMessage(
-                event,
-                handler,
-                TeaBridge.config.discord().pkMessageDelayMilliseconds() ?
-                    Instant.now().plusMillis(TeaBridge.config.discord().pkMessageDelay()) : Instant.now().plusSeconds(TeaBridge.config.discord().pkMessageDelay())
-            ));
-            return;
-        }
-        handler.accept(event, isProxied(event.getMessageId()));
-    }
+	static void await(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler) {
+		if (TeaBridge.config.discord().pkMessageDelay() > 0) {
+			scheduledMessages.add(new ScheduledMessage(
+					event,
+					handler,
+					TeaBridge.config.discord().pkMessageDelayMilliseconds() ?
+							Instant.now().plusMillis(TeaBridge.config.discord().pkMessageDelay()) : Instant.now().plusSeconds(TeaBridge.config.discord().pkMessageDelay())
+			));
+			return;
+		}
+		handler.accept(event, isProxied(event.getMessageId()));
+	}
 
-    private static boolean isProxied(String messageId) {
-        try {
-            var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
-                .uri(URI.create(MESSAGE_ENDPOINT.replace("{id}", messageId)))
-                .GET()
-                .build(), HttpResponse.BodyHandlers.ofString());
-            return response.statusCode() != 404;
-        } catch (Exception e) {
-            return false;
-        }
-    }
+	private static boolean isProxied(String messageId) {
+		try {
+			var response = TeaBridge.CLIENT.send(HttpRequest.newBuilder()
+					.uri(URI.create(MESSAGE_ENDPOINT.replace("{id}", messageId)))
+					.GET()
+					.build(), HttpResponse.BodyHandlers.ofString());
+			return response.statusCode() != 404;
+		} catch (Exception e) {
+			return false;
+		}
+	}
 
-    private record ScheduledMessage(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler, Instant instant) { }
+	private record ScheduledMessage(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler,
+									Instant instant) {
+	}
 }

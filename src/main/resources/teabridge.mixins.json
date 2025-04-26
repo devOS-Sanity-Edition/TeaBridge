@@ -4,11 +4,11 @@
   "package": "one.devos.nautical.teabridge.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ServerPlayerMixin",
-    "ServerGamePacketListenerImplMixin",
-    "PlayerListMixin",
+    "CrashReportMixin",
     "PlayerAdvancementsMixin",
-    "CrashReportMixin"
+    "PlayerListMixin",
+    "ServerGamePacketListenerImplMixin",
+    "ServerPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
