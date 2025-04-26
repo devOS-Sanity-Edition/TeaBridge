@@ -3,8 +3,10 @@ package one.devos.nautical.teabridge.discord;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Instant;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -14,36 +16,28 @@ import one.devos.nautical.teabridge.TeaBridge;
 class PKCompat {
 	private static final String MESSAGE_ENDPOINT = "https://api.pluralkit.me/v2/messages/{id}";
 
-	private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
+	private static ScheduledExecutorService scheduler;
 
 	static void initIfEnabled() {
 		if (!(TeaBridge.config.discord().pkMessageDelay() > 0)) return;
-		var thread = new Thread(() -> {
-			while (true) {
-				while (scheduledMessages.peek() == null) {
-				}
-				var message = scheduledMessages.peek();
-				if (Instant.now().compareTo(message.instant) >= 0) {
-					message.handler.accept(message.event, isProxied(message.event.getMessageId()));
-					scheduledMessages.remove();
-				}
-			}
-		}, "TeaBridge Chat Message Scheduler");
-		thread.setDaemon(true);
-		thread.start();
+		scheduler = Executors.newScheduledThreadPool(1, r -> {
+			Thread thread = new Thread(r, "TeaBridge Chat Message Scheduler");
+			thread.setDaemon(true);
+			return thread;
+		});
 	}
 
 	static void await(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler) {
-		if (TeaBridge.config.discord().pkMessageDelay() > 0) {
-			scheduledMessages.add(new ScheduledMessage(
-					event,
-					handler,
-					TeaBridge.config.discord().pkMessageDelayMilliseconds() ?
-							Instant.now().plusMillis(TeaBridge.config.discord().pkMessageDelay()) : Instant.now().plusSeconds(TeaBridge.config.discord().pkMessageDelay())
-			));
+		if (scheduler != null) {
+			scheduler.schedule(
+					() -> handler.accept(event, isProxied(event.getMessageId())),
+					TeaBridge.config.discord().pkMessageDelay(),
+					TeaBridge.config.discord().pkMessageDelayMilliseconds() ? TimeUnit.MILLISECONDS : TimeUnit.SECONDS
+			);
 			return;
 		}
-		handler.accept(event, isProxied(event.getMessageId()));
+
+		CompletableFuture.runAsync(() -> handler.accept(event, isProxied(event.getMessageId())));
 	}
 
 	private static boolean isProxied(String messageId) {
@@ -56,9 +50,5 @@ class PKCompat {
 		} catch (Exception e) {
 			return false;
 		}
-	}
-
-	private record ScheduledMessage(MessageReceivedEvent event, BiConsumer<MessageReceivedEvent, Boolean> handler,
-									Instant instant) {
 	}
 }

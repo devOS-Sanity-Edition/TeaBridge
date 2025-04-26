@@ -3,7 +3,7 @@ package one.devos.nautical.teabridge.discord;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +33,6 @@ public class Discord {
 			() -> selfMember.get().getEffectiveName(),
 			() -> URI.create(selfMember.get().getEffectiveAvatarUrl())
 	);
-
-	private static final LinkedBlockingQueue<ScheduledMessage> scheduledMessages = new LinkedBlockingQueue<>();
 
 	public static void onConfigLoad(Config.Discord config) {
 		stop();
@@ -78,17 +76,6 @@ public class Discord {
 			return;
 		}
 
-		Thread messageThread = new Thread(() -> {
-			while (true) {
-				try {
-					Discord.scheduledSend(scheduledMessages.take());
-				} catch (InterruptedException ignored) {
-				}
-			}
-		}, "TeaBridge Discord Message Scheduler");
-		messageThread.setDaemon(true);
-		messageThread.start();
-
 		PKCompat.initIfEnabled();
 	}
 
@@ -97,29 +84,23 @@ public class Discord {
 	}
 
 	public static void send(ProtoWebHook webHook, String message, @Nullable String displayName) {
-		scheduledMessages.add(new ScheduledMessage(webHook, message, displayName));
-	}
-
-	private static void scheduledSend(ScheduledMessage scheduledMessage) {
-		ProtoWebHook webHook = scheduledMessage.webHook;
-		String message = scheduledMessage.message;
-		String displayName = scheduledMessage.displayName;
-		if (jda != null) {
-			try {
-				HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(TeaBridge.config.discord().webhook())
-						.POST(HttpRequest.BodyPublishers.ofString(webHook.createMessage(message, displayName).toJson().getOrThrow()))
-						.header("Content-Type", "application/json; charset=utf-8")
-						.build(), HttpResponse.BodyHandlers.ofString());
-				if (response.statusCode() / 100 != 2)
-					throw new Exception("Non-success status code from request " + response);
-			} catch (Exception e) {
-				TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
+		CompletableFuture.runAsync(() -> {
+			if (jda != null) {
+				try {
+					HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(TeaBridge.config.discord().webhook())
+							.POST(HttpRequest.BodyPublishers.ofString(webHook.createMessage(message, displayName).toJson().getOrThrow()))
+							.header("Content-Type", "application/json; charset=utf-8")
+							.build(), HttpResponse.BodyHandlers.ofString());
+					if (response.statusCode() / 100 != 2)
+						throw new Exception("Non-success status code from request " + response);
+				} catch (Exception e) {
+					TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
+				}
 			}
-		}
+		});
 	}
 
 	public static void stop() {
-		scheduledMessages.clear();
 		if (jda != null) {
 			jda.shutdown();
 			jda = null;
@@ -135,8 +116,5 @@ public class Discord {
 		public static DataResult<WebHookData> fromJson(JsonElement json) {
 			return CODEC.parse(JsonOps.INSTANCE, json);
 		}
-	}
-
-	private record ScheduledMessage(ProtoWebHook webHook, String message, @Nullable String displayName) {
 	}
 }
