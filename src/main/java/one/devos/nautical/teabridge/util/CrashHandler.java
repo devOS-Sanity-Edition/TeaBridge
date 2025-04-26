@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.CrashReport;
+import net.minecraft.ReportType;
 import one.devos.nautical.teabridge.TeaBridge;
 import one.devos.nautical.teabridge.discord.Discord;
 
@@ -27,7 +28,7 @@ public class CrashHandler {
 			String message;
 			try {
 				HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(LOG_UPLOAD_URI)
-						.POST(HttpRequest.BodyPublishers.ofString("content=" + URLEncoder.encode(crash.getDetails(), StandardCharsets.UTF_8)))
+						.POST(HttpRequest.BodyPublishers.ofString("content=" + URLEncoder.encode(crash.getFriendlyReport(ReportType.CRASH), StandardCharsets.UTF_8)))
 						.header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 						.build(), HttpResponse.BodyHandlers.ofString());
 				if (response.statusCode() / 100 != 2)
