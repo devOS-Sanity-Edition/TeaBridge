@@ -19,7 +19,7 @@ plugins {
 base.archivesName = "teabridge"
 group = "one.devos.nautical"
 
-version = "1.3.0-mc$minecraftVersion"
+version = "1.4.0-mc$minecraftVersion"
 
 repositories {
     maven("https://maven.parchmentmc.org")
