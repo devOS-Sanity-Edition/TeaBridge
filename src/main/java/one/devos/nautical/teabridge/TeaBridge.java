@@ -27,9 +27,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import one.devos.nautical.teabridge.discord.ChannelListener;
 import one.devos.nautical.teabridge.discord.Discord;
-import one.devos.nautical.teabridge.duck.PlayerWebHook;
+import one.devos.nautical.teabridge.discord.PlayerWebHook;
 import one.devos.nautical.teabridge.util.CrashHandler;
-import one.devos.nautical.teabridge.util.StyledChatCompat;
 
 public class TeaBridge implements DedicatedServerModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("TeaBridge");
@@ -60,6 +59,8 @@ public class TeaBridge implements DedicatedServerModInitializer {
 				.ifError(e -> LOGGER.error("Failed to load config using defaults : {}", e))
 				.ifSuccess(loaded -> {
 					config = loaded;
+					if (config.debug())
+						TeaBridge.LOGGER.warn("!!Debug mode enabled in config!!");
 					this.onConfigLoad();
 				});
 	}
@@ -69,30 +70,25 @@ public class TeaBridge implements DedicatedServerModInitializer {
 	}
 
 	private void onServerStarting(MinecraftServer server) {
-		if (TeaBridge.config.debug()) TeaBridge.LOGGER.warn("!!Debug mode enabled in config!!");
-		Discord.send(TeaBridge.config.game().serverStartingMessage());
+		Discord.send(config.game().serverStartingMessage());
 	}
 
 	private void onServerStart(MinecraftServer server) {
 		ChannelListener.INSTANCE.setServer(server);
-		Discord.send(TeaBridge.config.game().serverStartMessage());
+		Discord.send(config.game().serverStartMessage());
 	}
 
 	private void onServerStop(MinecraftServer server) {
-		if (!CrashHandler.didCrash) Discord.send(TeaBridge.config.game().serverStopMessage());
+		if (!CrashHandler.didCrash) Discord.send(config.game().serverStopMessage());
 		Discord.stop();
 	}
 
 	private void onChatMessage(PlayerChatMessage message, ServerPlayer sender, ChatType.Bound params) {
-		if (sender != null) {
-			((PlayerWebHook) sender).send(message);
-		} else {
-			Discord.send(StyledChatCompat.modify(message).getLeft());
-		}
+		((PlayerWebHook) sender.connection).teabridge$send(message);
 	}
 
 	private void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
-		if (!TeaBridge.config.game().mirrorCommandMessages()) return;
+		if (!config.game().mirrorCommandMessages()) return;
 		if (!source.isPlayer()) Discord.send(message.signedContent());
 	}
 

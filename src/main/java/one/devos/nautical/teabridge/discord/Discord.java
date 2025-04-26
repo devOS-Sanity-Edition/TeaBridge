@@ -6,8 +6,6 @@ import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.jetbrains.annotations.Nullable;
-
 import com.google.common.base.Suppliers;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -29,7 +27,7 @@ public class Discord {
 	static JDA jda;
 	static Supplier<Member> selfMember;
 
-	public static final ProtoWebHook WEB_HOOK = new ProtoWebHook(
+	public static final WebHookPrototype WEB_HOOK = new WebHookPrototype(
 			() -> selfMember.get().getEffectiveName(),
 			() -> URI.create(selfMember.get().getEffectiveAvatarUrl())
 	);
@@ -80,15 +78,15 @@ public class Discord {
 	}
 
 	public static void send(String message) {
-		send(WEB_HOOK, message, null);
+		send(WEB_HOOK.createMessage(message));
 	}
 
-	public static void send(ProtoWebHook webHook, String message, @Nullable String displayName) {
+	public static void send(WebHookPrototype.Message message) {
 		CompletableFuture.runAsync(() -> {
 			if (jda != null) {
 				try {
 					HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(TeaBridge.config.discord().webhook())
-							.POST(HttpRequest.BodyPublishers.ofString(webHook.createMessage(message, displayName).toJson().getOrThrow()))
+							.POST(HttpRequest.BodyPublishers.ofString(message.toJson().getOrThrow()))
 							.header("Content-Type", "application/json; charset=utf-8")
 							.build(), HttpResponse.BodyHandlers.ofString());
 					if (response.statusCode() / 100 != 2)

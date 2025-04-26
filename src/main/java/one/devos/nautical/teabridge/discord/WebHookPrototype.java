@@ -11,12 +11,21 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 import one.devos.nautical.teabridge.util.JsonUtils;
 import one.devos.nautical.teabridge.util.MoreCodecs;
 
-public record ProtoWebHook(Supplier<String> username, Supplier<URI> avatar) {
+public record WebHookPrototype(Supplier<String> username, Supplier<URI> avatar) {
 	public Message createMessage(String content, @Nullable String displayName) {
-		return new Message(content, AllowedMentions.INSTANCE, displayName != null ? displayName : this.username.get(), this.avatar.get());
+		return new Message(
+				content, AllowedMentions.INSTANCE,
+				MarkdownSanitizer.escape(displayName != null ? displayName : this.username.get()),
+				this.avatar.get()
+		);
+	}
+
+	public Message createMessage(String content) {
+		return this.createMessage(content, null);
 	}
 
 	public record Message(String content, AllowedMentions allowedMentions, String username, URI avatarUrl) {

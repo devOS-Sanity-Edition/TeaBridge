@@ -13,7 +13,7 @@ import net.minecraft.ReportType;
 import one.devos.nautical.teabridge.util.CrashHandler;
 
 @Mixin(CrashReport.class)
-public abstract class CrashReportMixin {
+public class CrashReportMixin {
 	@Inject(method = "saveToFile(Ljava/nio/file/Path;Lnet/minecraft/ReportType;Ljava/util/List;)Z", at = @At("HEAD"))
 	private void handleCrash(Path path, ReportType reportType, List<String> list, CallbackInfoReturnable<Boolean> cir) {
 		CrashHandler.handle((CrashReport) (Object) this);

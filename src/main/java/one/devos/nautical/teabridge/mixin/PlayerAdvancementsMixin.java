@@ -10,10 +10,11 @@ import one.devos.nautical.teabridge.TeaBridge;
 import one.devos.nautical.teabridge.discord.Discord;
 
 @Mixin(PlayerAdvancements.class)
-public abstract class PlayerAdvancementsMixin {
+public class PlayerAdvancementsMixin {
 	@ModifyArg(method = "method_53637", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
 	private Component mirrorAwardMessage(Component awardMessage) {
-		if (TeaBridge.config.game().mirrorAdvancements()) Discord.send(awardMessage.getString());
+		if (TeaBridge.config.game().mirrorAdvancements())
+			Discord.send(awardMessage.getString());
 		return awardMessage;
 	}
 }

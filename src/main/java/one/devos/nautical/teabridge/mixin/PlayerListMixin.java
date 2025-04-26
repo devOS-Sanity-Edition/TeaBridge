@@ -10,10 +10,11 @@ import one.devos.nautical.teabridge.TeaBridge;
 import one.devos.nautical.teabridge.discord.Discord;
 
 @Mixin(PlayerList.class)
-public abstract class PlayerListMixin {
+public class PlayerListMixin {
 	@ModifyArg(method = "placeNewPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
 	private Component mirrorJoinMessage(Component joinMessage) {
-		if (TeaBridge.config.game().mirrorJoin()) Discord.send(joinMessage.getString());
+		if (TeaBridge.config.game().mirrorJoin())
+			Discord.send(joinMessage.getString());
 		return joinMessage;
 	}
 }
