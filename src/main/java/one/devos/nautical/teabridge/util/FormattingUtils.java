@@ -1,5 +1,6 @@
 package one.devos.nautical.teabridge.util;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -38,7 +39,7 @@ public class FormattingUtils {
 			suffix = Component.literal(">");
 		}
 
-		return prefix.append(mention.withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText)))).append(suffix);
+		return prefix.append(mention.withStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(hoverText)))).append(suffix);
 	}
 
 	public static MutableComponent formatRoles(final Collection<Role> roles) {
@@ -95,13 +96,13 @@ public class FormattingUtils {
 		for (Attachment attachment : message.getAttachments()) {
 			messageContent.append(
 					Component.literal(" [" + attachment.getFileName() + "]")
-							.withStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, attachment.getUrl())).withColor(ChatFormatting.BLUE)));
+							.withStyle(Style.EMPTY.withClickEvent(new ClickEvent.OpenUrl(URI.create(attachment.getUrl()))).withColor(ChatFormatting.BLUE)));
 		}
 
 		for (Sticker sticker : message.getStickers()) {
 			messageContent.append(
 					Component.literal(" [" + sticker.getName() + "]")
-							.withStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, sticker.getIconUrl())).withColor(ChatFormatting.BLUE)));
+							.withStyle(Style.EMPTY.withClickEvent(new ClickEvent.OpenUrl(URI.create(sticker.getIconUrl()))).withColor(ChatFormatting.BLUE)));
 		}
 
 		formatted.append(formatUser(true, message.getAuthor(), message.getMember()).append(" ").append(messageContent));

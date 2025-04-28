@@ -1,18 +1,18 @@
 // versions
-val minecraftVersion = "1.21.1"
-val minecraftDep = "=1.21.1"
+val minecraftVersion = "1.21.5"
+val minecraftDep = "=1.21.5"
 // https://parchmentmc.org/docs/getting-started
-val parchmentVersion = "2024.11.17"
+val parchmentVersion = "2025.04.19"
 // https://fabricmc.net/develop
 val loaderVersion = "0.16.14"
-val fapiVersion = "0.115.6+1.21.1"
+val fapiVersion = "0.121.0+1.21.5"
 
 // dev env mods
 val flkVersion = "1.13.2+kotlin.2.1.20"
 
 // buildscript
 plugins {
-    id("fabric-loom") version "1.9.+"
+    id("fabric-loom") version "1.10.1"
     id("maven-publish")
 }
 
