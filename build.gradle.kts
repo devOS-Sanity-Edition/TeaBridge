@@ -75,6 +75,11 @@ tasks.withType(ProcessResources::class) {
 	}
 }
 
+tasks.withType<AbstractArchiveTask> {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+}
+
 java {
     withSourcesJar()
 }
