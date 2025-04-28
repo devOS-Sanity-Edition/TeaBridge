@@ -24,12 +24,13 @@ import one.devos.nautical.teabridge.TeaBridge;
 import one.devos.nautical.teabridge.util.MoreCodecs;
 
 public class Discord {
-	static JDA jda;
-	static Supplier<Member> selfMember;
+	private static Supplier<Member> selfMember;
+	private static JDA jda;
+	private static boolean initialized = false;
 
 	public static final WebHookPrototype WEB_HOOK = new WebHookPrototype(
-			() -> selfMember.get().getEffectiveName(),
-			() -> URI.create(selfMember.get().getEffectiveAvatarUrl())
+			() -> selfMember().getEffectiveName(),
+			() -> URI.create(selfMember().getEffectiveAvatarUrl())
 	);
 
 	public static void onConfigLoad(Config.Discord config) {
@@ -69,36 +70,48 @@ public class Discord {
 					throw new RuntimeException("Guild is null. This most likely means you are missing the message content intent, please enable it within the app's settings in the discord developer portal.");
 				}
 			});
-		} catch (Exception e) {
-			TeaBridge.LOGGER.error("Exception initializing JDA", e);
-			return;
-		}
 
-		PKCompat.initIfEnabled();
+			PKCompat.initIfEnabled();
+
+			initialized = true;
+		} catch (Throwable e) {
+			TeaBridge.LOGGER.error("Exception initializing Discord", e);
+		}
+	}
+
+	public static Member selfMember() {
+		return selfMember.get();
+	}
+
+	public static boolean isInitialized() {
+		return initialized;
 	}
 
 	public static void send(String message) {
+		if (!initialized)
+			return;
 		send(WEB_HOOK.createMessage(message));
 	}
 
 	public static void send(WebHookPrototype.Message message) {
+		if (!initialized)
+			return;
 		CompletableFuture.runAsync(() -> {
-			if (jda != null) {
-				try {
-					HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(TeaBridge.config.discord().webhook())
-							.POST(HttpRequest.BodyPublishers.ofString(message.toJson().getOrThrow()))
-							.header("Content-Type", "application/json; charset=utf-8")
-							.build(), HttpResponse.BodyHandlers.ofString());
-					if (response.statusCode() / 100 != 2)
-						throw new Exception("Non-success status code from request " + response);
-				} catch (Exception e) {
-					TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
-				}
+			try {
+				HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(TeaBridge.config.discord().webhook())
+						.POST(HttpRequest.BodyPublishers.ofString(message.toJson().getOrThrow()))
+						.header("Content-Type", "application/json; charset=utf-8")
+						.build(), HttpResponse.BodyHandlers.ofString());
+				if (response.statusCode() / 100 != 2)
+					throw new Exception("Non-success status code from request " + response);
+			} catch (Exception e) {
+				TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
 			}
 		});
 	}
 
 	public static void stop() {
+		initialized = false;
 		if (jda != null) {
 			jda.shutdown();
 			jda = null;
@@ -107,8 +120,8 @@ public class Discord {
 
 	private record WebHookData(long guildId, long channelId) {
 		public static final Codec<WebHookData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-				MoreCodecs.fromString(Long::parseUnsignedLong).fieldOf("guild_id").forGetter(WebHookData::guildId),
-				MoreCodecs.fromString(Long::parseUnsignedLong).fieldOf("channel_id").forGetter(WebHookData::channelId)
+				MoreCodecs.SNOWFLAKE.fieldOf("guild_id").forGetter(WebHookData::guildId),
+				MoreCodecs.SNOWFLAKE.fieldOf("channel_id").forGetter(WebHookData::channelId)
 		).apply(instance, WebHookData::new));
 
 		public static DataResult<WebHookData> fromJson(JsonElement json) {

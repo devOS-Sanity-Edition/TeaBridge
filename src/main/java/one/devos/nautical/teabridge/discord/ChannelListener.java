@@ -10,6 +10,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.players.PlayerList;
 import one.devos.nautical.teabridge.TeaBridge;
 import one.devos.nautical.teabridge.util.FormattingUtils;
 
@@ -30,17 +31,17 @@ public class ChannelListener extends ListenerAdapter {
 	@Override
 	public void onMessageReceived(@NotNull MessageReceivedEvent receivedEvent) {
 		PKCompat.await(receivedEvent, (event, proxied) -> {
-			if (server == null) return;
+			if (this.server == null) return;
 
 			if (
 					!event.isFromGuild() ||
-							event.getChannel().getIdLong() != channel ||
-							event.getAuthor().getIdLong() == Discord.selfMember.get().getUser().getIdLong() ||
+							event.getChannel().getIdLong() != this.channel ||
+							event.getAuthor().getIdLong() == Discord.selfMember().getUser().getIdLong() ||
 							(event.isWebhookMessage() && !proxied) ||
 							(!event.isWebhookMessage() && proxied)
 			) return;
 
-			final var playerList = server.getPlayerList();
+			PlayerList playerList = this.server.getPlayerList();
 
 			Optional<MutableComponent> formattedMessage;
 			try {

@@ -19,6 +19,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.fabricmc.loader.api.FabricLoader;
 import one.devos.nautical.teabridge.util.MoreCodecs;
 
 public record Config(
@@ -39,15 +40,16 @@ public record Config(
 	).apply(instance, Config::new));
 
 	public static final Config DEFAULT = new Config(Discord.DEFAULT, Avatars.DEFAULT, Game.DEFAULT, Crashes.DEFAULT, false);
+	public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve(TeaBridge.ID + ".json");
 
-	public static DataResult<Config> loadOrCreate(Path path) {
+	public static DataResult<Config> load() {
 		try {
-			if (Files.exists(path)) {
-				try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+			if (Files.exists(PATH)) {
+				try (BufferedReader reader = Files.newBufferedReader(PATH)) {
 					return CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader));
 				}
 			} else {
-				try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
+				try (BufferedWriter writer = Files.newBufferedWriter(PATH, StandardOpenOption.CREATE)) {
 					GSON.toJson(CODEC.encodeStart(JsonOps.INSTANCE, DEFAULT).getOrThrow(), writer);
 					return DataResult.success(DEFAULT);
 				}

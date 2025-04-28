@@ -24,7 +24,7 @@ public class CrashHandler {
 
 	public static void handle(CrashReport crash) {
 		didCrash = true;
-		if (TeaBridge.config.crashes().uploadToMclogs()) {
+		if (Discord.isInitialized() && TeaBridge.config.crashes().uploadToMclogs()) {
 			String message;
 			try {
 				HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(LOG_UPLOAD_URI)
