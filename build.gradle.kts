@@ -19,7 +19,7 @@ plugins {
 base.archivesName = "teabridge"
 group = "one.devos.nautical"
 
-version = "1.4.0-mc$minecraftVersion"
+version = "1.4.1-mc$minecraftVersion"
 
 repositories {
     maven("https://maven.parchmentmc.org")
@@ -82,6 +82,7 @@ java {
 publishing {
     publications {
         register<MavenPublication>("mavenJava") {
+            artifactId = "teabridge"
             from(components["java"])
         }
     }
