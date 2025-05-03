@@ -5,10 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "CrashReportMixin",
-    "PlayerAdvancementsMixin",
-    "PlayerListMixin",
-    "ServerGamePacketListenerImplMixin",
-    "ServerPlayerMixin"
+    "ServerGamePacketListenerImplMixin"
   ],
   "injectors": {
     "defaultRequire": 1

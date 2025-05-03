@@ -1,131 +1,109 @@
 package one.devos.nautical.teabridge.discord;
 
-import java.net.URI;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
+import java.util.Collections;
+import java.util.Optional;
 
-import com.google.common.base.Suppliers;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.JsonOps;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.IncomingWebhookClient;
+import net.dv8tion.jda.api.entities.WebhookClient;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.requests.Route;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
+import net.dv8tion.jda.internal.requests.RestActionImpl;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.MinecraftServer;
 import one.devos.nautical.teabridge.Config;
 import one.devos.nautical.teabridge.TeaBridge;
-import one.devos.nautical.teabridge.util.MoreCodecs;
+import one.devos.nautical.teabridge.util.FormattingUtils;
 
 public class Discord {
-	private static Supplier<Member> selfMember;
-	private static JDA jda;
-	private static boolean initialized = false;
+	@Nullable
+	private static Discord instance;
 
-	public static final WebHookPrototype WEB_HOOK = new WebHookPrototype(
-			() -> selfMember().getEffectiveName(),
-			() -> URI.create(selfMember().getEffectiveAvatarUrl())
-	);
+	private final JDA jda;
+	private final IncomingWebhookClient webhookClient;
 
-	public static void onConfigLoad(Config.Discord config) {
-		stop();
+	public Discord(Config.Discord config, MinecraftServer server) {
+		this.jda = JDABuilder.createDefault(config.token())
+				.enableIntents(GatewayIntent.MESSAGE_CONTENT)
+				.build();
+		this.webhookClient = WebhookClient.createClient(this.jda, config.webhook());
 
-		if (config.token().isEmpty()) {
-			TeaBridge.LOGGER.error("Unable to load, no Discord token is specified!");
-			return;
-		}
+		long channel = new RestActionImpl<Long>(
+				this.jda, Route.Webhooks.GET_WEBHOOK.compile(this.webhookClient.getId()),
+				(response, request) -> response.getObject().getUnsignedLong("channel_id")
+		).complete();
+		this.jda.addEventListener(new MessageBridge(channel, server));
+	}
 
-		if (config.webhook().toString().isEmpty()) {
-			TeaBridge.LOGGER.error("Unable to load, no Discord webhook is specified!");
-			return;
-		}
+	public void sendSystemMessage(String content) {
+		this.webhookClient.sendMessage(content)
+				.setAllowedMentions(Collections.emptySet())
+				.queue();
+	}
 
+	public void sendMessage(WebhookPrototype prototype, String content) {
+		this.webhookClient.sendMessage(content)
+				.setAllowedMentions(Collections.emptySet())
+				.setUsername(MarkdownSanitizer.escape(prototype.username().get()))
+				.setAvatarUrl(prototype.avatar().get())
+				.queue();
+	}
+
+	public void shutdown() {
+		if (instance == this)
+			instance = null;
+		this.jda.shutdown();
+	}
+
+	@Nullable
+	public static Discord instance() {
+		return instance;
+	}
+
+	@Nullable
+	public static Discord initialize(Config.Discord config, MinecraftServer server) {
 		try {
-			// Get required data from webhook
-			HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(config.webhook())
-					.GET()
-					.build(), HttpResponse.BodyHandlers.ofString());
-			if (response.statusCode() / 100 != 2)
-				throw new Exception("Non-success status code from request " + response);
-			WebHookData webHookData = WebHookData.fromJson(JsonParser.parseString(response.body())).getOrThrow();
-			if (TeaBridge.config.debug()) TeaBridge.LOGGER.warn("Webhook response : {}", response.body());
-			ChannelListener.INSTANCE.setChannel(webHookData.channelId);
-
-			jda = JDABuilder.createDefault(config.token())
-					.enableIntents(GatewayIntent.MESSAGE_CONTENT)
-					.addEventListeners(ChannelListener.INSTANCE)
-					.build();
-
-			selfMember = Suppliers.memoize(() -> {
-				Guild guild = jda.getGuildById(webHookData.guildId);
-				if (guild != null) {
-					return guild.getSelfMember();
-				} else {
-					throw new RuntimeException("Guild is null. This most likely means you are missing the message content intent, please enable it within the app's settings in the discord developer portal.");
-				}
-			});
-
-			PKCompat.initIfEnabled();
-
-			initialized = true;
-		} catch (Throwable e) {
+			if (instance != null)
+				throw new IllegalStateException("Discord already initialized");
+			instance = new Discord(config, server);
+			return instance;
+		} catch (Exception e) {
 			TeaBridge.LOGGER.error("Exception initializing Discord", e);
+			return null;
 		}
 	}
 
-	public static Member selfMember() {
-		return selfMember.get();
-	}
+	private static final class MessageBridge extends ListenerAdapter {
+		private final long channel;
+		private final MinecraftServer server;
 
-	public static boolean isInitialized() {
-		return initialized;
-	}
+		private MessageBridge(long channel, MinecraftServer server) {
+			this.server = server;
+			this.channel = channel;
+		}
 
-	public static void send(String message) {
-		if (!initialized)
-			return;
-		send(WEB_HOOK.createMessage(message));
-	}
+		@Override
+		public void onMessageReceived(@NotNull MessageReceivedEvent event) {
+			if (event.getChannel().getIdLong() != this.channel || event.isWebhookMessage())
+				return;
 
-	public static void send(WebHookPrototype.Message message) {
-		if (!initialized)
-			return;
-		CompletableFuture.runAsync(() -> {
+			Optional<MutableComponent> formattedMessage;
 			try {
-				HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(TeaBridge.config.discord().webhook())
-						.POST(HttpRequest.BodyPublishers.ofString(message.toJson().getOrThrow()))
-						.header("Content-Type", "application/json; charset=utf-8")
-						.build(), HttpResponse.BodyHandlers.ofString());
-				if (response.statusCode() / 100 != 2)
-					throw new Exception("Non-success status code from request " + response);
+				formattedMessage = FormattingUtils.formatMessage(event.getMessage());
 			} catch (Exception e) {
-				TeaBridge.LOGGER.warn("Failed to send webhook message to discord : ", e);
+				TeaBridge.LOGGER.error("Exception when handling message : ", e);
+				formattedMessage = Optional.of(Component.literal("Exception when handling message, check log for details!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
 			}
-		});
-	}
-
-	public static void stop() {
-		initialized = false;
-		if (jda != null) {
-			jda.shutdown();
-			jda = null;
-		}
-	}
-
-	private record WebHookData(long guildId, long channelId) {
-		public static final Codec<WebHookData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-				MoreCodecs.SNOWFLAKE.fieldOf("guild_id").forGetter(WebHookData::guildId),
-				MoreCodecs.SNOWFLAKE.fieldOf("channel_id").forGetter(WebHookData::channelId)
-		).apply(instance, WebHookData::new));
-
-		public static DataResult<WebHookData> fromJson(JsonElement json) {
-			return CODEC.parse(JsonOps.INSTANCE, json);
+			formattedMessage.ifPresent(message -> this.server.execute(() -> this.server.getPlayerList().broadcastSystemMessage(message, false)));
 		}
 	}
 }

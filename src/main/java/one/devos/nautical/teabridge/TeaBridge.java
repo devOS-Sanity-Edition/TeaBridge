@@ -1,7 +1,5 @@
 package one.devos.nautical.teabridge;
 
-import java.net.http.HttpClient;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,72 +21,79 @@ import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import one.devos.nautical.teabridge.discord.ChannelListener;
 import one.devos.nautical.teabridge.discord.Discord;
-import one.devos.nautical.teabridge.discord.PlayerWebHook;
+import one.devos.nautical.teabridge.discord.PlayerWebhook;
 import one.devos.nautical.teabridge.util.CrashHandler;
 
 public class TeaBridge implements DedicatedServerModInitializer {
 	public static final String ID = "teabridge";
 	public static final Logger LOGGER = LoggerFactory.getLogger("TeaBridge");
 
-	public static final HttpClient CLIENT = HttpClient.newBuilder().build();
+	public static Config config;
 
-	public static Config config = Config.DEFAULT;
+	private static Discord discord;
 
 	@Override
 	public void onInitializeServer() {
-		ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
-		ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStart);
-		ServerLifecycleEvents.SERVER_STOPPED.register(this::onServerStop);
+		ServerLifecycleEvents.SERVER_STARTING.register(TeaBridge::onServerStarting);
+		ServerLifecycleEvents.SERVER_STARTED.register(TeaBridge::onServerStart);
+		ServerLifecycleEvents.SERVER_STOPPED.register(TeaBridge::onServerStop);
 
 		ResourceLocation phaseId = ResourceLocation.fromNamespaceAndPath(ID, "mirror");
 		ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(ResourceLocation.fromNamespaceAndPath("switchy_proxy", "set_args"), phaseId);
 		ServerMessageEvents.CHAT_MESSAGE.addPhaseOrdering(phaseId, ResourceLocation.fromNamespaceAndPath("switchy_proxy", "clear"));
-		ServerMessageEvents.CHAT_MESSAGE.register(phaseId, this::onChatMessage);
+		ServerMessageEvents.CHAT_MESSAGE.register(phaseId, TeaBridge::onChatMessage);
 
-		ServerMessageEvents.COMMAND_MESSAGE.register(this::onCommandMessage);
+		ServerMessageEvents.COMMAND_MESSAGE.register(TeaBridge::onCommandMessage);
 
-		CommandRegistrationCallback.EVENT.register(this::registerCommands);
+		CommandRegistrationCallback.EVENT.register(TeaBridge::registerCommands);
+	}
 
+	private static void onConfigLoad(Config config, MinecraftServer server) {
+		TeaBridge.config = config;
+
+		if (TeaBridge.discord != null)
+			TeaBridge.discord.shutdown();
+		TeaBridge.discord = Discord.initialize(config.discord(), server);
+	}
+
+	private static void onServerStarting(MinecraftServer server) {
 		Config.load()
 				.ifError(e -> LOGGER.error("Failed to load config using defaults : {}", e))
-				.ifSuccess(loaded -> {
-					config = loaded;
-					if (config.debug())
-						LOGGER.warn("!!Debug mode enabled in config!!");
-					this.onConfigLoad();
-				});
+				.ifSuccess(config -> onConfigLoad(config, server));
+
+		if (Discord.instance() != null)
+			Discord.instance().sendSystemMessage(config.game().serverStartingMessage());
 	}
 
-	private void onConfigLoad() {
-		Discord.onConfigLoad(config.discord());
+	private static void onServerStart(MinecraftServer server) {
+		if (Discord.instance() != null)
+			Discord.instance().sendSystemMessage(config.game().serverStartMessage());
 	}
 
-	private void onServerStarting(MinecraftServer server) {
-		Discord.send(config.game().serverStartingMessage());
+	private static void onServerStop(MinecraftServer server) {
+		Discord discord = Discord.instance();
+		if (discord == null)
+			return;
+
+		if (!CrashHandler.didCrash)
+			discord.sendSystemMessage(config.game().serverStopMessage());
+		discord.shutdown();
 	}
 
-	private void onServerStart(MinecraftServer server) {
-		ChannelListener.INSTANCE.setServer(server);
-		Discord.send(config.game().serverStartMessage());
+	private static void onChatMessage(PlayerChatMessage message, ServerPlayer sender, ChatType.Bound params) {
+		((PlayerWebhook) sender.connection).teabridge$send(message);
 	}
 
-	private void onServerStop(MinecraftServer server) {
-		if (!CrashHandler.didCrash) Discord.send(config.game().serverStopMessage());
-		Discord.stop();
+	private static void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
+		if (!config.game().mirrorCommandMessages())
+			return;
+
+		if (Discord.instance() != null && !source.isPlayer())
+			Discord.instance().sendSystemMessage(message.signedContent());
 	}
 
-	private void onChatMessage(PlayerChatMessage message, ServerPlayer sender, ChatType.Bound params) {
-		((PlayerWebHook) sender.connection).teabridge$send(message);
-	}
-
-	private void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
-		if (!config.game().mirrorCommandMessages()) return;
-		if (!source.isPlayer()) Discord.send(message.signedContent());
-	}
-
-	private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess, Commands.CommandSelection environment) {
+	private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess, Commands.CommandSelection environment) {
 		dispatcher.register(Commands.literal(ID)
 				.requires(source -> source.hasPermission(2))
 				.then(
@@ -104,9 +109,8 @@ public class TeaBridge implements DedicatedServerModInitializer {
 												);
 												LOGGER.warn("Failed to reload config : {}", e);
 											})
-											.ifSuccess(loaded -> {
-												config = loaded;
-												this.onConfigLoad();
+											.ifSuccess(config -> {
+												onConfigLoad(config, source.getServer());
 												source.sendSuccess(
 														() -> Component.literal("Config reloaded!")
 																.withStyle(ChatFormatting.GREEN),

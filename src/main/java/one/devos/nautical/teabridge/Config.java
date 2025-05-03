@@ -2,44 +2,37 @@ package one.devos.nautical.teabridge;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.function.Function;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
+import com.google.gson.Strictness;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.fabricmc.loader.api.FabricLoader;
-import one.devos.nautical.teabridge.util.MoreCodecs;
 
 public record Config(
 		Discord discord,
 		Avatars avatars,
 		Game game,
-		Crashes crashes,
-		boolean debug
+		Crashes crashes
 ) {
-	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().disableHtmlEscaping().create();
+	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setStrictness(Strictness.LENIENT).disableHtmlEscaping().create();
 
 	public static final Codec<Config> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			Discord.CODEC.fieldOf("discord").forGetter(Config::discord),
 			Avatars.CODEC.fieldOf("avatars").forGetter(Config::avatars),
 			Game.CODEC.fieldOf("game").forGetter(Config::game),
-			Crashes.CODEC.fieldOf("crashes").forGetter(Config::crashes),
-			Codec.BOOL.optionalFieldOf("debug", false).forGetter(Config::debug)
+			Crashes.CODEC.fieldOf("crashes").forGetter(Config::crashes)
 	).apply(instance, Config::new));
 
-	public static final Config DEFAULT = new Config(Discord.DEFAULT, Avatars.DEFAULT, Game.DEFAULT, Crashes.DEFAULT, false);
+	public static final Config DEFAULT = new Config(Discord.DEFAULT, Avatars.DEFAULT, Game.DEFAULT, Crashes.DEFAULT);
 	public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve(TeaBridge.ID + ".json");
 
 	public static DataResult<Config> load() {
@@ -61,18 +54,18 @@ public record Config(
 
 	public record Discord(
 			String token,
-			URI webhook,
+			String webhook,
 			int pkMessageDelay,
 			boolean pkMessageDelayMilliseconds
 	) {
 		public static final String DEFAULT_TOKEN = "";
-		public static final URI DEFAULT_WEBHOOK = URI.create("");
+		public static final String DEFAULT_WEBHOOK = "";
 		public static final int DEFAULT_PK_MESSAGE_DELAY = 0;
 		public static final boolean DEFAULT_PK_MESSAGE_DELAY_MILLISECONDS = true;
 
 		public static final Codec<Discord> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.fieldOf("token").forGetter(Discord::token),
-				MoreCodecs.URI.fieldOf("webhook").forGetter(Discord::webhook),
+				Codec.STRING.fieldOf("webhook").forGetter(Discord::webhook),
 				Codec.INT.fieldOf("pkMessageDelay").forGetter(Discord::pkMessageDelay),
 				Codec.BOOL.fieldOf("pkMessageDelayMilliseconds").forGetter(Discord::pkMessageDelayMilliseconds)
 		).apply(instance, Discord::new));
@@ -85,18 +78,12 @@ public record Config(
 		);
 	}
 
-	public record Avatars(Function<String, URI> avatarUrl, boolean useTextureId) {
-		public static final Function<String, URI> DEFAULT_AVATAR_URL = a -> URI.create("https://api.nucleoid.xyz/skin/face/256/%s".formatted(a));
+	public record Avatars(String avatarUrl, boolean useTextureId) {
+		public static final String DEFAULT_AVATAR_URL = "https://api.nucleoid.xyz/skin/face/256/%s";
 		public static final boolean DEFAULT_USE_TEXTURE_ID = false;
 
 		public static final Codec<Avatars> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-				Codec.STRING
-						.comapFlatMap(
-								MoreCodecs.checkedMapper(a -> (Function<String, URI>) b -> URI.create(a.formatted(b))),
-								b -> URLDecoder.decode(b.apply(URLEncoder.encode("%s", StandardCharsets.UTF_8)).toString(), StandardCharsets.UTF_8)
-						)
-						.fieldOf("avatarUrl")
-						.forGetter(Avatars::avatarUrl),
+				Codec.STRING.fieldOf("avatarUrl").forGetter(Avatars::avatarUrl),
 				Codec.BOOL.fieldOf("useTextureId").forGetter(Avatars::useTextureId)
 		).apply(instance, Avatars::new));
 

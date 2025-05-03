@@ -2,6 +2,7 @@ package one.devos.nautical.teabridge.util;
 
 import java.net.URI;
 import java.net.URLEncoder;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -24,21 +25,25 @@ public class CrashHandler {
 
 	public static void handle(CrashReport crash) {
 		didCrash = true;
-		if (Discord.isInitialized() && TeaBridge.config.crashes().uploadToMclogs()) {
-			String message;
-			try {
-				HttpResponse<String> response = TeaBridge.CLIENT.send(HttpRequest.newBuilder(LOG_UPLOAD_URI)
-						.POST(HttpRequest.BodyPublishers.ofString("content=" + URLEncoder.encode(crash.getFriendlyReport(ReportType.CRASH), StandardCharsets.UTF_8)))
-						.header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-						.build(), HttpResponse.BodyHandlers.ofString());
-				if (response.statusCode() / 100 != 2)
-					throw new Exception("Non-success status code from request " + response);
-				message = LOG_UPLOAD_RESPONSE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(response.body())).getOrThrow();
-			} catch (Exception e) {
-				message = "Failed to upload crash report : " + e;
-			}
 
-			Discord.send(message);
+		if (!TeaBridge.config.crashes().uploadToMclogs())
+			return;
+
+		if (Discord.instance() == null)
+			return;
+
+		String message;
+		try (HttpClient client = HttpClient.newHttpClient()) {
+			HttpResponse<String> response = client.send(HttpRequest.newBuilder(LOG_UPLOAD_URI)
+					.POST(HttpRequest.BodyPublishers.ofString("content=" + URLEncoder.encode(crash.getFriendlyReport(ReportType.CRASH), StandardCharsets.UTF_8)))
+					.header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+					.build(), HttpResponse.BodyHandlers.ofString());
+			if (response.statusCode() / 100 != 2)
+				throw new Exception("Non-success status code from request " + response);
+			message = LOG_UPLOAD_RESPONSE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(response.body())).getOrThrow();
+		} catch (Exception e) {
+			message = "Failed to upload crash report : " + e;
 		}
+		Discord.instance().sendSystemMessage(message);
 	}
 }
