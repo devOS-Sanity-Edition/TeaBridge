@@ -1,18 +1,18 @@
 // versions
-val minecraftVersion = "1.21.5"
-val minecraftDep = "=1.21.5"
+val minecraftVersion = "1.21.1"
+val minecraftDep = "=1.21.1"
 // https://parchmentmc.org/docs/getting-started
-val parchmentVersion = "2025.04.19"
+val parchmentVersion = "2024.11.17"
 // https://fabricmc.net/develop
-val loaderVersion = "0.16.14"
-val fapiVersion = "0.121.0+1.21.5"
+val loaderVersion = "0.17.3"
+val fapiVersion = "0.116.11+1.21.1"
 
 // dev env mods
-val flkVersion = "1.13.2+kotlin.2.1.20"
+val flkVersion = "1.13.7+kotlin.2.2.21"
 
 // buildscript
 plugins {
-    id("fabric-loom") version "1.10.1"
+    id("fabric-loom") version "1.12-SNAPSHOT"
     id("maven-publish")
 }
 
@@ -20,12 +20,6 @@ base.archivesName = "teabridge"
 group = "one.devos.nautical"
 
 version = "2.0.0-mc$minecraftVersion"
-
-repositories {
-    maven("https://maven.parchmentmc.org")
-    maven("https://api.modrinth.com/maven")
-
-}
 
 repositories {
     maven("https://maven.parchmentmc.org")

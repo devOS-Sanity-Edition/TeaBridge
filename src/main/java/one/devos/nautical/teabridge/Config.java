@@ -9,7 +9,6 @@ import java.nio.file.StandardOpenOption;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
-import com.google.gson.Strictness;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
@@ -23,7 +22,7 @@ public record Config(
 		Game game,
 		Crashes crashes
 ) {
-	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setStrictness(Strictness.LENIENT).disableHtmlEscaping().create();
+	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setLenient().disableHtmlEscaping().create();
 
 	public static final Codec<Config> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			Discord.CODEC.fieldOf("discord").forGetter(Config::discord),

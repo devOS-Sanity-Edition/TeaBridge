@@ -54,7 +54,7 @@ public class Discord {
 		this.webhookClient.sendMessage(content)
 				.setAllowedMentions(Collections.emptySet())
 				.setUsername(MarkdownSanitizer.escape(prototype.username().get()))
-				.setAvatarUrl(prototype.avatar().get())
+				.setAvatarUrl(prototype.avatarUrl().get())
 				.queue();
 	}
 
