@@ -1,27 +1,28 @@
 package one.devos.nautical.teabridge.mixin;
 
+import com.llamalad7.mixinextras.expression.Definition;
+import com.llamalad7.mixinextras.expression.Expression;
+import com.llamalad7.mixinextras.sugar.Local;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Inject;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import one.devos.nautical.teabridge.TeaBridge;
 import one.devos.nautical.teabridge.discord.Discord;
 
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
 @Mixin(ServerPlayer.class)
 public class ServerPlayerMixin {
-	@ModifyArg(
-			method = "die",
-			at = @At(
-					value = "INVOKE",
-					target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"
-			),
-			index = 0
-	)
-	private Component mirrorDeathMessage(Component deathMessage) {
-		if (Discord.instance() != null && TeaBridge.config.game().mirrorDeath())
-			Discord.instance().sendSystemMessage("**" + deathMessage.getString() + "**");
-		return deathMessage;
+	@Definition(id = "getDeathMessage", method = "Lnet/minecraft/world/damagesource/CombatTracker;getDeathMessage()Lnet/minecraft/network/chat/Component;")
+	@Expression("? = ?.getDeathMessage()")
+	@Inject(method = "die", at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER))
+	private void mirrorDeathMessage(CallbackInfo ci, @Local Component message) {
+		if (Discord.instance() != null && TeaBridge.config.game().mirrorDeath()) {
+			Discord.instance().sendSystemMessage("**" + message.getString() + "**");
+		}
 	}
 }
