@@ -14,8 +14,6 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.fabricmc.loader.api.FabricLoader;
-
 public record Config(
 		Discord discord,
 		Avatars avatars,
@@ -32,7 +30,7 @@ public record Config(
 	).apply(instance, Config::new));
 
 	public static final Config DEFAULT = new Config(Discord.DEFAULT, Avatars.DEFAULT, Game.DEFAULT, Crashes.DEFAULT);
-	public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve(TeaBridge.ID + ".json");
+	public static final Path PATH = PlatformHelper.INSTANCE.getConfigDir().resolve(TeaBridge.ID + ".json");
 
 	public static DataResult<Config> load() {
 		try {

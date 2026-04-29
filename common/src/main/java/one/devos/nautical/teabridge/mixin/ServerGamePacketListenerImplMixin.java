@@ -20,14 +20,14 @@ public abstract class ServerGamePacketListenerImplMixin implements PlayerWebhook
 	public ServerPlayer player;
 
 	@Unique
-	private WebhookPrototype webhook;
+	private WebhookPrototype teabridge$webhook;
 
 	@Override
 	public WebhookPrototype teabridge$prototype() {
-		if (this.webhook == null) {
-			this.webhook = new WebhookPrototype(PlayerWebhook.username(this.player), PlayerWebhook.avatarUrl(this.player));
+		if (this.teabridge$webhook == null) {
+			this.teabridge$webhook = new WebhookPrototype(PlayerWebhook.username(this.player), PlayerWebhook.avatarUrl(this.player));
 		}
-		return this.webhook;
+		return this.teabridge$webhook;
 	}
 
 	@ModifyArg(

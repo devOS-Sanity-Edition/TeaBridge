@@ -20,16 +20,16 @@
   "environment": "server",
   "entrypoints": {
     "server": [
-      "one.devos.nautical.teabridge.TeaBridge"
+      "one.devos.nautical.teabridge.fabric.TeaBridgeFabric"
     ]
   },
   "mixins": [
-    "teabridge.mixins.json"
+    "teabridge-common.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=${loader_version}",
-    "fabric-api": ">=${fapi_version}",
-    "minecraft": "${minecraft_dependency}"
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": ">=${fabric_api_version}",
+    "minecraft": "=${minecraft_version}"
   },
   "conflicts": {
     "blockbot-discord": "*",

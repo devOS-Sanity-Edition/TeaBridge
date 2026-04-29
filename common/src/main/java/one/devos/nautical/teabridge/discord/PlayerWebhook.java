@@ -9,7 +9,6 @@ import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.level.ServerPlayer;
 import one.devos.nautical.teabridge.Config;
 import one.devos.nautical.teabridge.TeaBridge;
-import one.devos.nautical.teabridge.util.StyledChatCompat;
 
 @SuppressWarnings("InterfaceMayBeAnnotatedFunctional")
 public interface PlayerWebhook {
@@ -19,14 +18,8 @@ public interface PlayerWebhook {
 		if (Discord.instance() == null)
 			return;
 
-		String proxyContent = StyledChatCompat.INSTANCE.getArg(message, StyledChatCompat.PROXY_CONTENT_ARG);
-		String proxyDisplayName = StyledChatCompat.INSTANCE.getArg(message, StyledChatCompat.PROXY_DISPLAY_NAME_ARG);
-
 		WebhookPrototype prototype = this.teabridge$prototype();
-		Discord.instance().sendMessage(
-				proxyDisplayName != null ? prototype.withDisplayName(proxyDisplayName) : prototype,
-				proxyContent != null ? proxyContent : message.signedContent()
-		);
+		Discord.instance().sendMessage(prototype, message.signedContent());
 	}
 
 	static Supplier<String> username(ServerPlayer player) {
