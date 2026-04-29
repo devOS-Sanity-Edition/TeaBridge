@@ -13,4 +13,4 @@ pluginManagement {
 rootProject.name = "teabridge"
 
 includeBuild("build-logic")
-include("common", "fabric")
+include("common", "fabric", "neoforge")

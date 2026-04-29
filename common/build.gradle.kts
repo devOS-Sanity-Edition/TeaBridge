@@ -8,5 +8,7 @@ dependencies {
     mappings(loom.officialMojangMappings())
     compileOnly(libs.bundles.mixin)
 
-    api(libs.jda)
+    compileOnlyApi(libs.jda) {
+        exclude(group = "org.slf4j")
+    }
 }

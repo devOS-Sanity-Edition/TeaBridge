@@ -8,7 +8,9 @@ dependencies {
     mappings(loom.officialMojangMappings())
     modImplementation(libs.bundles.fabric)
 
-    implementation(libs.jda)
+    runtimeOnly(libs.jda) {
+        exclude(module = "opus-java")
+    }
 }
 
 loom {

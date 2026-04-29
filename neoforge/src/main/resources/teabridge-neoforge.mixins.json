@@ -4,14 +4,10 @@
   "mixinextras": {
     "minVersion": "0.5.0"
   },
-  "package": "one.devos.nautical.teabridge.mixin",
+  "package": "one.devos.nautical.teabridge.neoforge.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "CrashReportMixin",
-    "PlayerAdvancementsMixin",
-    "PlayerListMixin",
-    "ServerGamePacketListenerImplMixin",
-    "ServerPlayerMixin"
+    "PlayerListMixin"
   ],
   "injectors": {
     "defaultRequire": 1

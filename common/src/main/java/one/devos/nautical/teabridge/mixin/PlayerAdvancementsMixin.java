@@ -18,18 +18,19 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(PlayerAdvancements.class)
 public class PlayerAdvancementsMixin {
+	@SuppressWarnings("UnresolvedMixinReference")
 	@WrapOperation(
-			method = "method_53637",
+			method = {"method_53637", "lambda$award$2"},
 			at = @At(
 					value = "INVOKE",
 					target = "Lnet/minecraft/advancements/AdvancementType;createAnnouncement(Lnet/minecraft/advancements/AdvancementHolder;Lnet/minecraft/server/level/ServerPlayer;)Lnet/minecraft/network/chat/MutableComponent;"
 			)
 	)
 	private MutableComponent mirrorAdvancementMessage(AdvancementType instance, AdvancementHolder holder, ServerPlayer player, Operation<MutableComponent> original) {
-		MutableComponent advancementMessage = original.call(instance, holder, player);
+		MutableComponent message = original.call(instance, holder, player);
 		if (Discord.instance() != null && TeaBridge.config.game().mirrorAdvancements()) {
-			Discord.instance().sendSystemMessage(advancementMessage.getString());
+			Discord.instance().sendSystemMessage("**" + message.getString() + "**");
 		}
-		return advancementMessage;
+		return message;
 	}
 }

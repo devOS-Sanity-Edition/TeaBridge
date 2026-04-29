@@ -36,6 +36,7 @@ tasks.processResources {
 		"version" to version,
         "fabric_loader_version" to versionOf("fabric-loader"),
         "fabric_api_version" to versionOf("fabric-api"),
+        "neoforge_version" to versionOf("neoforge"),
         "minecraft_version" to minecraftVersion
 	)
 

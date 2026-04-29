@@ -63,11 +63,11 @@ public final class TeaBridge {
 		discord.shutdown();
 	}
 
-	public static void onChatMessage(PlayerChatMessage message, ServerPlayer sender, ChatType.Bound params) {
+	public static void onChatMessage(PlayerChatMessage message, ServerPlayer sender, ChatType.Bound boundChatType) {
 		((PlayerWebhook) sender.connection).teabridge$send(message);
 	}
 
-	public static void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
+	public static void onCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound boundChatType) {
 		if (!config.game().mirrorCommandMessages())
 			return;
 
@@ -75,7 +75,7 @@ public final class TeaBridge {
 			Discord.instance().sendSystemMessage(message.signedContent());
 	}
 
-	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess, Commands.CommandSelection environment) {
+	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context, Commands.CommandSelection selection) {
 		dispatcher.register(Commands.literal(ID)
 				.requires(source -> source.hasPermission(2))
 				.then(
