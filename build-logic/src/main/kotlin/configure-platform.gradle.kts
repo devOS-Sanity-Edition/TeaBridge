@@ -9,9 +9,10 @@ val commonResources: Configuration by configurations.dependencyScope("commonReso
 val compileOnly: Configuration = configurations.getByName("compileOnly")
 
 dependencies {
-    compileOnly(project(":common"))
-    commonJava(project(path = ":common", configuration = "commonJava"))
-    commonResources(project(path = ":common", configuration = "commonResources"))
+    val commonPath = ":${parent!!.name}-common"
+    compileOnly(project(commonPath))
+    commonJava(project(path = commonPath, configuration = "commonJava"))
+    commonResources(project(path = commonPath, configuration = "commonResources"))
 }
 
 // include common stuff in assembly tasks

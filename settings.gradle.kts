@@ -1,3 +1,5 @@
+rootProject.name = "teabridge"
+
 enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
 pluginManagement {
@@ -10,7 +12,10 @@ pluginManagement {
     }
 }
 
-rootProject.name = "teabridge"
-
 includeBuild("build-logic")
-include("common", "fabric", "neoforge")
+
+for (platform in listOf("common", "fabric", "neoforge")) {
+    val name = "${rootProject.name}-$platform"
+    include(name)
+    project(":$name").projectDir = file(platform)
+}

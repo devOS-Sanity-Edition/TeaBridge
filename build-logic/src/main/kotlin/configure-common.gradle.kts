@@ -8,8 +8,7 @@ fun versionOf(name: String): String {
     return libs.findVersion(name).get().toString()
 }
 
-base.archivesName = parent!!.name
-group = "one.devos.nautical"
+group = "one.devos.nautical.${parent!!.name}"
 
 val buildNum = providers.environmentVariable("GITHUB_RUN_NUMBER")
     .filter(String::isNotEmpty)
@@ -18,8 +17,8 @@ val buildNum = providers.environmentVariable("GITHUB_RUN_NUMBER")
     .get()
 
 val minecraftVersion = versionOf("minecraft")
-// x.y.z+build.100-mcX.Y.Z-fabric
-version = "2.0.0+$buildNum-mc$minecraftVersion-$name"
+// x.y.z+build.100-mcX.Y.Z
+version = "2.0.0+$buildNum-mc$minecraftVersion"
 
 java {
     withSourcesJar()
@@ -45,7 +44,7 @@ tasks.processResources {
 	}
 }
 
-if (name == "common") {
+if (projectDir.name == "common") {
     configurations.consumable("commonJava")
     configurations.consumable("commonResources")
 
