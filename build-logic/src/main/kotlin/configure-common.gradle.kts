@@ -8,7 +8,7 @@ fun versionOf(name: String): String {
     return libs.findVersion(name).get().toString()
 }
 
-group = "one.devos.nautical.${parent!!.name}"
+group = "me.cuboid.modding.${parent!!.name}"
 
 val buildNum = providers.environmentVariable("GITHUB_RUN_NUMBER")
     .filter(String::isNotEmpty)

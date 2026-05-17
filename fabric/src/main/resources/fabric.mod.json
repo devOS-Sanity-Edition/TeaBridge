@@ -5,22 +5,22 @@
   "name": "TeaBridge",
   "description": "A simple survival friendly MC -> Discord chat bridge",
   "authors": [
-    "devOS: Sanity Edition",
-    "Team Nautical"
+    "CuboidModding"
   ],
   "contributors": [
-    "Maximumpower55"
+    "Maximumpower55",
+    "asoji"
   ],
   "contact": {
-    "website": "https://devos.one/",
-    "repo": "https://github.com/devOS-Sanity-Edition/TeaBridge"
+    "website": "http://cuboid.me/modding",
+    "repo": "https://github.com/CuboidModding/TeaBridge"
   },
   "license": "MIT",
   "icon": "assets/teabridge/icon.png",
   "environment": "server",
   "entrypoints": {
     "server": [
-      "one.devos.nautical.teabridge.fabric.TeaBridgeFabric"
+      "me.cuboid.modding.teabridge.fabric.TeaBridgeFabric"
     ]
   },
   "mixins": [

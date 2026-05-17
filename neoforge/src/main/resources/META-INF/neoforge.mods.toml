@@ -1,16 +1,16 @@
 modLoader = "javafml"
 loaderVersion = "[1,)"
 license = "MIT"
-issueTrackerURL = "https://github.com/devOS-Sanity-Edition/TeaBridge/issues"
+issueTrackerURL = "https://github.com/CuboidModding/TeaBridge/issues"
 
 [[mods]]
 modId = "teabridge"
 version = "${version}"
 displayName = "TeaBridge"
 description = "A simple survival friendly MC -> Discord chat bridge"
-authors = "devOS: Sanity Edition, Team Nautical"
-credits = "Maximumpower55"
-displayURL = "https://devos.one"
+authors = "CuboidModding"
+credits = "Maximumpower55, asoji"
+displayURL = "http://cuboid.me/modding"
 
 [[mixins]]
 config = "teabridge-common.mixins.json"

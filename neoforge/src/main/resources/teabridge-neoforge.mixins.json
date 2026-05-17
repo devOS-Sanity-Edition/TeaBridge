@@ -4,7 +4,7 @@
   "mixinextras": {
     "minVersion": "0.5.0"
   },
-  "package": "one.devos.nautical.teabridge.neoforge.mixin",
+  "package": "me.cuboid.modding.teabridge.neoforge.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "PlayerListMixin"
