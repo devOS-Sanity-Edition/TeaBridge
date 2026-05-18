@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "teabridge",
+  "version": "${version}",
+  "name": "TeaBridge",
+  "description": "A simple survival friendly MC -> Discord chat bridge",
+  "authors": [
+    "CuboidModding"
+  ],
+  "contributors": [
+    "Maximumpower55",
+    "asoji"
+  ],
+  "contact": {
+    "website": "http://cuboid.me/modding",
+    "repo": "https://github.com/CuboidModding/TeaBridge"
+  },
+  "license": "MIT",
+  "icon": "assets/teabridge/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "server": [
+      "me.cuboid.modding.teabridge.fabric.TeaBridgeFabric"
+    ]
+  },
+  "mixins": [
+    "teabridge-common.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": ">=${fabric_api_version}",
+    "minecraft": "=${minecraft_version}"
+  },
+  "conflicts": {
+    "blockbot-discord": "*",
+    "modfestutilities": "*",
+    "d4f": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.modrinth": "https://modrinth.com/mod/teabridge"
+      }
+    }
+  }
+}

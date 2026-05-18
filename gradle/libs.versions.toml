@@ -1,0 +1,40 @@
+[versions]
+loom = "1.15.+"
+
+minecraft = "1.21.1"
+
+mixin = "0.16.5+mixin.0.8.7"
+mixin-extras = "0.5.3"
+
+jda = "6.4.1"
+
+# fabric - https://fabricmc.net/develop
+fabric_loader = "0.19.2"
+fabric_api = "0.116.11+1.21.1"
+
+# neoforge - https://neoforged.net/
+neoforge = "21.1.219"
+mdg = "2.0.+"
+
+[libraries]
+minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
+
+mixin = { module = "net.fabricmc:sponge-mixin", version.ref = "mixin" }
+mixin-extras = { module = "io.github.llamalad7:mixinextras-common", version.ref = "mixin-extras" }
+
+jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
+
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric-loader" }
+fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric-api" }
+
+
+[bundles]
+mixin = [ "mixin", "mixin-extras" ]
+fabric = [ "fabric-loader", "fabric-api" ]
+
+[plugins]
+loom = { id = "net.fabricmc.fabric-loom-remap", version.ref = "loom" }
+mdg = { id = "net.neoforged.moddev", version.ref = "mdg" }
+
+configure-common = { id = "configure-common" }
+configure-platform = { id = "configure-platform" }
