@@ -1,16 +1,7 @@
 # TeaBridge
 
 <p align="center">
-  <img title="modicon" height="512" src="src/main/resources/assets/teabridge/icon.png">
-</p>
-
-<p align="center">
-  <a href="https://modrinth.com/mod/teabridge" target="_blank">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/modrinth/art/blob/main/Branding/Badge/badge-dark__184x72.png?raw=true">
-      <img title="modrinth" height="50" src="https://github.com/modrinth/art/blob/main/Branding/Badge/badge-light__184x72.png?raw=true">
-    </picture>
-  </a>
+  <img title="modicon" height="512" src="common/src/main/resources/assets/teabridge/icon.png">
 </p>
 
 TeaBridge is another Fabric/Quilt mod that bridges your Discord and Minecraft chat together. Originally made only for the devOS Seasons server to fix some issues we've had with other chat bridge mods, this mod is now available to all.
